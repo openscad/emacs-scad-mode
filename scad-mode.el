@@ -39,10 +39,6 @@
 ;;
 ;; M-x install-package RET scad-mode RET
 
-;;; To Do:
-;; - Support for background/debug/root/disable modifiers
-;; - Font lock of non-built-in function calls
-
 ;;; Code:
 
 ;;;###autoload
