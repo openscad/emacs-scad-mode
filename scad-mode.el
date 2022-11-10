@@ -212,7 +212,7 @@ Key bindings:
     (setq-local c-mode-hook nil))
   (c-initialize-cc-mode t)
   ;; (setq local-abbrev-table scad-mode-abbrev-table
-  ;; 	abbrev-mode t)
+  ;;       abbrev-mode t)
   (use-local-map scad-mode-map)
   (c-set-offset (quote cpp-macro) 0 nil)
   (c-init-language-vars scad-mode)
