@@ -5,7 +5,7 @@
 ;; Created:          2010
 ;; Keywords:         languages
 ;; Homepage:         https://github.com/openscad/emacs-scad-mode
-;; Package-Requires: ((emacs "26"))
+;; Package-Requires: ((emacs "26.1"))
 ;; Version:          92.0
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -110,12 +110,29 @@
   "SCAD operators."
   :type 'list)
 
+(defcustom scad-preview-camera '(0 0 0 50 0 20 500)
+  "Default parameters for the Gimbal camera."
+  :type '(repeat integer))
+
+(defcustom scad-preview-refresh 1.0
+  "Delay in seconds until updating preview."
+  :type 'number)
+
+(defcustom scad-preview-size '(600 . 600)
+  "Size of preview image."
+  :type '(cons integer integer))
+
+(defcustom scad-preview-colorscheme "Tomorrow"
+  "Colorscheme for rendering preview."
+  :type 'string)
+
 (defvar scad-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "\C-c\C-o" #'scad-open-current-buffer)
+    (define-key map "\C-c\C-o" #'scad-open)
+    (define-key map "\C-c\C-p" #'scad-preview)
+    (define-key map "\C-c\C-e" #'scad-export)
     (define-key map "\t" #'indent-for-tab-command)
     (define-key map "\M-\t" #'completion-at-point)
-    ;;(define-key map "\C-c\C-s" #'c-show-syntactic-information) ;; Debugging info
     map)
   "Keymap for `scad-mode'.")
 
@@ -203,10 +220,175 @@ Key bindings:
           scad-completions
           :exclusive 'no)))
 
-(defun scad-open-current-buffer ()
+(defun scad-open ()
   "Open current buffer with `scad-command'."
   (interactive)
   (call-process scad-command nil 0 nil (buffer-file-name)))
+
+(defun scad-export ()
+  "Render and export current SCAD model."
+  (interactive)
+  (compile (concat scad-command
+                   " -o " (expand-file-name (read-file-name "Export to: "))
+                   " " buffer-file-name)))
+
+(defvar-local scad--preview-buffer  nil)
+(defvar-local scad--preview-camera  nil)
+(defvar-local scad--preview-process nil)
+(defvar-local scad--preview-size    nil)
+(defvar-local scad--preview-status  nil)
+(defvar-local scad--preview-timer   nil)
+(put 'scad--preview-buffer  'permanent-local t)
+(put 'scad--preview-camera  'permanent-local t)
+(put 'scad--preview-process 'permanent-local t)
+(put 'scad--preview-size    'permanent-local t)
+(put 'scad--preview-status  'permanent-local t)
+(put 'scad--preview-timer   'permanent-local t)
+
+(defvar scad-preview-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "M--") #'scad-preview-size-)
+    (define-key map (kbd "M-+") #'scad-preview-size+)
+    (define-key map "-" #'scad-preview-distance-)
+    (define-key map "+" #'scad-preview-distance+)
+    (define-key map [right] #'scad-preview-rotate-z-)
+    (define-key map [left] #'scad-preview-rotate-z+)
+    (define-key map [up] #'scad-preview-rotate-x+)
+    (define-key map [down] #'scad-preview-rotate-x-)
+    (define-key map [M-left] #'scad-preview-translate-x+)
+    (define-key map [M-right] #'scad-preview-translate-x-)
+    (define-key map [M-up] #'scad-preview-translate-z-)
+    (define-key map [M-down] #'scad-preview-translate-z+)
+    map)
+  "Keymap for SCAD preview buffers.")
+
+(defun scad--preview-status (&optional status)
+  "Update mode line of preview buffer with STATUS."
+  (setq scad--preview-status
+        (concat (apply #'format "[%d %d %d] [%d %d %d] %d"
+                       scad--preview-camera)
+                " " status))
+  (force-mode-line-update))
+
+(defun scad-preview ()
+  "Preview SCAD models in real-time within Emacs."
+  (interactive)
+  (setq scad--preview-buffer (if (buffer-live-p scad--preview-buffer)
+                                 scad--preview-buffer
+                               (generate-new-buffer (format "*scad preview: %s*" (buffer-name)))))
+  (add-hook 'after-change-functions #'scad--preview-change nil 'local)
+  (display-buffer scad--preview-buffer)
+  (let ((orig-buffer (current-buffer)))
+    (with-current-buffer scad--preview-buffer
+      (setq scad--preview-buffer orig-buffer)
+      (add-hook 'kill-buffer-hook #'scad--preview-kill nil t)
+      (scad--preview-reset))))
+
+(defun scad--preview-change (&rest _)
+  "Buffer changed, trigger rerendering."
+  (if (not (buffer-live-p scad--preview-buffer))
+      (remove-hook 'after-change-functions #'scad--preview-change 'local)
+    (let ((buffer scad--preview-buffer))
+      (with-current-buffer buffer
+        (scad--preview-kill)
+        (setq scad--preview-timer
+              (run-with-timer
+               scad-preview-refresh nil
+               (lambda ()
+                 (when (buffer-live-p buffer)
+                   (with-current-buffer buffer
+                     (setq scad--preview-timer nil)
+                     (scad--preview-render))))))))))
+
+;; Based on https://github.com/zk-phi/scad-preview
+(defun scad--preview-render ()
+  "Render image from current buffer."
+  (when (buffer-live-p scad--preview-buffer)
+    (scad--preview-kill)
+    (scad--preview-status "Rendering...")
+    (let* ((infile (make-temp-file "scad-preview-" nil ".scad"))
+           (outfile (concat infile ".png"))
+           (buffer (current-buffer)))
+      (with-current-buffer scad--preview-buffer
+        (save-restriction
+          (widen)
+          (write-region (point-min) (point-max) infile nil 'nomsg)))
+      (setq scad--preview-process
+            (make-process
+             :name scad-command
+             :sentinel (lambda (&rest _)
+                         (when (buffer-live-p buffer)
+                           (with-current-buffer buffer
+                             (setq scad--preview-process nil)
+                             (if (not (ignore-errors
+                                        (and (file-exists-p outfile)
+                                             (> (file-attribute-size (file-attributes outfile)) 0))))
+                                 (scad--preview-status "Error")
+                               (fundamental-mode)
+                               (erase-buffer)
+                               (insert-file-contents outfile)
+                               (let ((inhibit-message t)
+                                     (message-log-max nil))
+                                 (scad-preview-mode))
+                               (scad--preview-status))))
+                         (delete-file outfile)
+                         (delete-file infile))
+             :command (list scad-command
+                            "-o" outfile
+                            "--preview"
+                            (format "--imgsize=%d,%d"
+                                    (car scad--preview-size)
+                                    (cdr scad--preview-size))
+                            (format "--camera=%s"
+                                    (mapconcat #'number-to-string scad--preview-camera ","))
+                            (format "--colorscheme=%s" scad-preview-colorscheme)
+                            infile))))))
+
+(defun scad--preview-kill ()
+  "Kill current rendering."
+  (when (process-live-p scad--preview-process)
+    (delete-process scad--preview-process)
+    (setq scad--preview-process nil))
+  (when scad--preview-timer
+    (cancel-timer scad--preview-timer)
+    (setq scad--preview-timer nil)))
+
+(define-derived-mode scad-preview-mode image-mode "SCADPreview"
+ "Major mode for SCAD preview buffers."
+ (setq mode-line-format '("" mode-line-buffer-identification (" " scad--preview-status))
+       revert-buffer-function #'scad--preview-reset))
+
+(defun scad--preview-reset (&rest _)
+  "Reset camera parameters and refresh."
+  (setq scad--preview-camera (copy-sequence scad-preview-camera)
+        scad--preview-size (copy-tree scad-preview-size))
+  (scad--preview-render))
+
+(defun scad--preview-move (idx val)
+  "Increment camera IDX by VAL."
+  (cl-incf (nth idx scad--preview-camera) val)
+  (scad--preview-render))
+
+(defun scad--preview-size (factor)
+  "Resize preview by FACTOR."
+  (setf (car scad--preview-size) (round (* (car scad--preview-size) factor))
+        (cdr scad--preview-size) (round (* (cdr scad--preview-size) factor)))
+  (scad--preview-render))
+
+(defun scad-preview-translate-x+ () (interactive) (scad--preview-move 0 10))
+(defun scad-preview-translate-x- () (interactive) (scad--preview-move 0 -10))
+(defun scad-preview-translate-z+ () (interactive) (scad--preview-move 2 10))
+(defun scad-preview-translate-z- () (interactive) (scad--preview-move 2 -10))
+(defun scad-preview-rotate-x+ () (interactive) (scad--preview-move 3 20))
+(defun scad-preview-rotate-x- () (interactive) (scad--preview-move 3 -20))
+(defun scad-preview-rotate-y+ () (interactive) (scad--preview-move 4 20))
+(defun scad-preview-rotate-y- () (interactive) (scad--preview-move 4 -20))
+(defun scad-preview-rotate-z+ () (interactive) (scad--preview-move 5 20))
+(defun scad-preview-rotate-z- () (interactive) (scad--preview-move 5 -20))
+(defun scad-preview-distance- () (interactive) (scad--preview-move 6 100))
+(defun scad-preview-distance+ () (interactive) (scad--preview-move 6 -100))
+(defun scad-preview-size- () (interactive) (scad--preview-size (/ 1.1)))
+(defun scad-preview-size+ () (interactive) (scad--preview-size 1.1))
 
 (provide 'scad-mode)
 ;;; scad-mode.el ends here

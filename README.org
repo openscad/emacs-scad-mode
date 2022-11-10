@@ -13,6 +13,7 @@
 
 - Syntax highlighting
 - Basic completion function
+- Preview rendered model in separate window
 
 * Installation
 
