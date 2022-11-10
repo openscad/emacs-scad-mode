@@ -1,5 +1,5 @@
 #+title: scad-mode - Emacs mode to edit OpenSCAD files
-language: en
+#+language: en
 #+export_file_name: scad-mode.texi
 #+texinfo_dir_category: Emacs misc features
 #+texinfo_dir_title: Scad-Mode: (scad-mode).
