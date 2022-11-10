@@ -177,11 +177,6 @@ Defaults to K&R if nil. If you want to set the style with file
     ,@scad-keywords ,@scad-functions ,@scad-modules)
   "List of known words for completion.")
 
-(defcustom scad-mode-disable-c-mode-hook t
-  "When set to t, do not run hooks of parent mode (`c-mode')."
-  :tag "SCAD Mode Disable C Mode Hook"
-  :type 'boolean)
-
 (put 'scad-mode 'c-mode-prefix "scad-")
 ;;;###autoload
 (define-derived-mode scad-mode c-mode "SCAD"
@@ -195,10 +190,9 @@ initialization, then `scad-mode-hook'.
 Key bindings:
 \\{scad-mode-map}"
   :group 'scad
+  :after-hook (c-update-modeline)
   (add-hook 'completion-at-point-functions
             #'scad-completion-at-point nil 'local)
-  (when scad-mode-disable-c-mode-hook
-    (setq-local c-mode-hook nil))
   (c-initialize-cc-mode t)
   ;; (setq local-abbrev-table scad-mode-abbrev-table
   ;;       abbrev-mode t)
@@ -207,8 +201,7 @@ Key bindings:
   (c-init-language-vars scad-mode)
   (c-basic-common-init 'scad-mode (or scad-indent-style "k&r"))
   (c-font-lock-init)
-  (c-run-mode-hooks 'c-mode-common-hook 'scad-mode-hook)
-  (c-update-modeline))
+  (c-run-mode-hooks 'c-mode-common-hook))
 
 (defun scad-completion-at-point ()
   "Completion at point function."
