@@ -149,23 +149,17 @@
     st)
   "Syntax table for `scad-mode'.")
 
-(defvar scad-keywords-regexp (regexp-opt scad-keywords 'words))
-(defvar scad-modules-regexp (regexp-opt scad-modules 'words))
-(defvar scad-functions-regexp (regexp-opt scad-functions 'words))
-(defvar scad-deprecated-regexp (regexp-opt scad-deprecated 'words))
-(defvar scad-operators-regexp (regexp-opt scad-operators))
-
 (defvar scad-font-lock-keywords
   `(
     ("\\(module\\|function\\)[ \t]+\\(\\sw+\\)" (1 'font-lock-keyword-face nil) (2 'font-lock-function-name-face nil t))
     ("\\(use\\|include\\)[ \t]*<\\([^>]+\\)>" (1 'font-lock-preprocessor-face nil) (2 'font-lock-type-face nil t))
     ("<\\(\\sw+\\)>" (1 'font-lock-builtin-face nil))
     ("$\\(\\sw+\\)" (1 'font-lock-builtin-face nil))
-    (,scad-keywords-regexp . font-lock-keyword-face)
-    (,scad-modules-regexp .  font-lock-builtin-face)
-    (,scad-functions-regexp .  font-lock-function-name-face)
-    (,scad-deprecated-regexp .  font-lock-warning-face)
-    ;(,scad-operators-regexp .  font-lock-operator-face) ;; This actually looks pretty ugly
+    (,(regexp-opt scad-keywords 'words)   . font-lock-keyword-face)
+    (,(regexp-opt scad-modules 'words)    . font-lock-builtin-face)
+    (,(regexp-opt scad-functions 'words)  . font-lock-function-name-face)
+    (,(regexp-opt scad-deprecated 'words) . font-lock-warning-face)
+    ;(,(regexp-opt scad-operators) . font-lock-operator-face) ;; This actually looks pretty ugly
     ;("\\(\\<\\S +\\>\\)\\s *(" 1 font-lock-function-name-face t) ;; Seems to override other stuff (e.g. in comments and builtins)
     )
   "Keyword highlighting specification for `scad-mode'.")
@@ -179,8 +173,8 @@ Defaults to K&R if nil. If you want to set the style with file
   local variables use the `c-file-style' variable.")
 
 (defvar scad-completions
-  (append '("module" "function" "use" "include")
-          scad-keywords scad-functions scad-modules)
+  `("module" "function" "use" "include"
+    ,@scad-keywords ,@scad-functions ,@scad-modules)
   "List of known words for completion.")
 
 (defcustom scad-mode-disable-c-mode-hook t
