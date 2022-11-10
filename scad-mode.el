@@ -113,6 +113,8 @@
 (defvar scad-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-o" #'scad-open-current-buffer)
+    (define-key map "\t" #'indent-for-tab-command)
+    (define-key map "\M-\t" #'completion-at-point)
     ;;(define-key map "\C-c\C-s" #'c-show-syntactic-information) ;; Debugging info
     map)
   "Keymap for `scad-mode'.")
