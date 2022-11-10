@@ -1,11 +1,10 @@
 ;;; scad-mode.el --- A major mode for editing OpenSCAD code -*- lexical-binding: t -*-
 
 ;; Author:           Len Trigg, Łukasz Stelmach
-;; Maintainer:       Len Trigg <lenbok@gmail.com>
-;; Created:          March 2010
-;; Modified:         28 Jun 2020
+;; Maintainer:       Len Trigg <lenbok@gmail.com>, Daniel Mendler <mail@daniel-mendler.de>
+;; Created:          2010
 ;; Keywords:         languages
-;; URL:              https://raw.github.com/openscad/openscad/master/contrib/scad-mode.el
+;; Homepage:         https://github.com/openscad/emacs-scad-mode
 ;; Package-Requires: ((emacs "26"))
 ;; Version:          92.0
 
@@ -38,7 +37,7 @@
 ;;
 ;; install from MELPA
 ;;
-;; M-x install-package <ENTER> scad-mode <ENTER>
+;; M-x install-package RET scad-mode RET
 
 ;;; To Do:
 ;; - Support for background/debug/root/disable modifiers
