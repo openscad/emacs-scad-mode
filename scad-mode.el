@@ -329,6 +329,7 @@ Key bindings:
       (setq scad--preview-process
             (make-process
              :name scad-command
+             :buffer "*scad output*"
              :sentinel (lambda (&rest _)
                          (when (buffer-live-p buffer)
                            (with-current-buffer buffer
