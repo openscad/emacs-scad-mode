@@ -18,6 +18,7 @@
 - Preview rendered model in separate window (press =C-c C-c=)
 - Open buffer in OpenSCAD (press =C-c C-o=)
 - Export buffer with OpenSCAD (press =C-c C-e=)
+- Flymake support (enable =flymake-mode= in =scad-mode= buffers)
 
 * Org Babel support
 
