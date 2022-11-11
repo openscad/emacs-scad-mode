@@ -34,11 +34,7 @@
 
 ;;; Code:
 
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.scad$" . scad-mode))
-
 (require 'cc-mode)
-
 (eval-when-compile
   (require 'cc-langs)
   (require 'cc-fonts)
@@ -74,8 +70,7 @@
     "norm" "cross"                                                      ;;2014.03
     "concat" "chr"                                                      ;;2015.03
     "assert" "ord"                                                      ;;2019.05
-    "is_undef" "is_list" "is_num" "is_bool" "is_string" "is_function"   ;;2019.05 type test
-    )
+    "is_undef" "is_list" "is_num" "is_bool" "is_string" "is_function")  ;;2019.05 type test
   "SCAD functions."
   :type '(repeat string))
 
@@ -94,8 +89,7 @@
     "projection"                                                        ;;projection.cc
     "minkowski" "hull" "resize"                                         ;;cgaladv.cc
     "parent_module"                                                     ;;2014.03
-    "offset" "text"                                                     ;;2015.03
-    )
+    "offset" "text")                                                    ;;2015.03
   "SCAD modules."
   :type '(repeat string))
 
@@ -150,12 +144,10 @@ Options are axes, crosshairs, edges, scales, wireframe."
 
 (defvar scad-mode-syntax-table
   (let ((st (make-syntax-table)))
-    ;; support comment style: “// ...”
-    ;; support comment style: “/* ... */”
+    ;; support comment style: // and /* ... */
     (modify-syntax-entry ?\/ ". 124b" st)
     (modify-syntax-entry ?\n "> b" st)
     (modify-syntax-entry ?* ". 23" st)
-
     ;; Extra punctuation
     (modify-syntax-entry ?+  "." st)
     (modify-syntax-entry ?-  "." st)
@@ -167,13 +159,11 @@ Options are axes, crosshairs, edges, scales, wireframe."
     (modify-syntax-entry ?|  "." st)
     (modify-syntax-entry ?=  "." st)
     (modify-syntax-entry ?\;  "." st)
-
     st)
   "Syntax table for `scad-mode'.")
 
 (defvar scad-font-lock-keywords
-  `(
-    ("\\(module\\|function\\)[ \t]+\\(\\sw+\\)" (1 'font-lock-keyword-face nil) (2 'font-lock-function-name-face nil t))
+  `(("\\(module\\|function\\)[ \t]+\\(\\sw+\\)" (1 'font-lock-keyword-face nil) (2 'font-lock-function-name-face nil t))
     ("\\(use\\|include\\)[ \t]*<\\([^>]+\\)>" (1 'font-lock-preprocessor-face nil) (2 'font-lock-type-face nil t))
     ("<\\(\\sw+\\)>" (1 'font-lock-builtin-face nil))
     ("$\\(\\sw+\\)" (1 'font-lock-builtin-face nil))
@@ -189,16 +179,15 @@ Options are axes, crosshairs, edges, scales, wireframe."
 (defconst scad-font-lock-keywords-2 scad-font-lock-keywords)
 (defconst scad-font-lock-keywords-3 scad-font-lock-keywords)
 
-(defvar scad-indent-style nil
-  "The style of indentation for `scad-mode'.
-Defaults to K&R if nil. If you want to set the style with file
-  local variables use the `c-file-style' variable.")
-
 (defvar scad-completions
   (append scad-keywords scad-functions scad-modules)
   "List of known words for completion.")
 
 (put 'scad-mode 'c-mode-prefix "scad-")
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.scad$" . scad-mode))
+
 ;;;###autoload
 (define-derived-mode scad-mode c-mode "SCAD"
   "Major mode for editing OpenSCAD code.
@@ -220,7 +209,7 @@ Key bindings:
   (use-local-map scad-mode-map)
   (c-set-offset (quote cpp-macro) 0 nil)
   (c-init-language-vars scad-mode)
-  (c-basic-common-init 'scad-mode (or scad-indent-style "k&r"))
+  (c-basic-common-init 'scad-mode c-default-style)
   (c-font-lock-init)
   (c-run-mode-hooks 'c-mode-common-hook))
 
