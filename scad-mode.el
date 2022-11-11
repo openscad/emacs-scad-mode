@@ -1,6 +1,6 @@
 ;;; scad-mode.el --- A major mode for editing OpenSCAD code -*- lexical-binding: t -*-
 
-;; Author:           Len Trigg, Łukasz Stelmach
+;; Author:           Len Trigg, Łukasz Stelmach, zk_phi, Daniel Mendler
 ;; Maintainer:       Len Trigg <lenbok@gmail.com>, Daniel Mendler <mail@daniel-mendler.de>
 ;; Created:          2010
 ;; Keywords:         languages
