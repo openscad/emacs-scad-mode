@@ -332,7 +332,7 @@ Key bindings:
              :noquery t
              :connection-type 'pipe
              :name "scad-preview"
-             :buffer "*scad output*"
+             :buffer "*scad preview output*"
              :sentinel
              (lambda (proc _event)
                (when (memq (process-status proc) '(exit signal))
