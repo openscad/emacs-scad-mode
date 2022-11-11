@@ -15,7 +15,7 @@
 
 - Syntax highlighting
 - Basic completion function (press =M-TAB=)
-- Preview rendered model in separate window (press =C-c C-p=)
+- Preview rendered model in separate window (press =C-c C-c=)
 - Open buffer in OpenSCAD (press =C-c C-o=)
 - Export buffer with OpenSCAD (press =C-c C-e=)
 

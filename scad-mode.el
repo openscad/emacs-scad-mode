@@ -128,10 +128,15 @@
   "Colorscheme for rendering preview."
   :type 'string)
 
+(defcustom scad-preview-view '("axes" "scales")
+  "List of views to be rendered.
+Options are axes, crosshairs, edges, scales, wireframe."
+  :type '(repeat string))
+
 (defvar scad-mode-map
   (let ((map (make-sparse-keymap)))
+    (define-key map "\C-c\C-c" #'scad-preview)
     (define-key map "\C-c\C-o" #'scad-open)
-    (define-key map "\C-c\C-p" #'scad-preview)
     (define-key map "\C-c\C-e" #'scad-export)
     (define-key map "\t" #'indent-for-tab-command)
     (define-key map "\M-\t" #'completion-at-point)
@@ -349,6 +354,8 @@ Key bindings:
                             (format "--imgsize=%d,%d"
                                     (car scad--preview-size)
                                     (cdr scad--preview-size))
+                            (format "--view=%s"
+                                    (mapconcat #'identity scad-preview-view ","))
                             (format "--camera=%s"
                                     (mapconcat #'number-to-string scad--preview-camera ","))
                             (format "--colorscheme=%s" scad-preview-colorscheme)

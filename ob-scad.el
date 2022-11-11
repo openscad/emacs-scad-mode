@@ -34,7 +34,8 @@
 (defvar org-babel-header-args:scad
   '((colorscheme . :any)
     (imgsize . :any)
-    (camera . :any))
+    (camera . :any)
+    (views . :any))
   "Scad specific header args.")
 
 (defun org-babel-execute:scad (body params)
@@ -51,6 +52,8 @@
                        "--viewall"
                        (format "--colorscheme=%s"
                                (alist-get :colorscheme params scad-preview-colorscheme))
+                       (format "--views=%s" (or (alist-get :views params)
+                                                (mapconcat #'identity scad-preview-view ",")))
                        (when-let (camera (alist-get :camera params))
                          (format "--camera=%s" camera))
                        (when-let (imgsize (alist-get :imgsize params))
