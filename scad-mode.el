@@ -284,7 +284,7 @@ Key bindings:
   (interactive)
   (setq scad--preview-buffer (if (buffer-live-p scad--preview-buffer)
                                  scad--preview-buffer
-                               (generate-new-buffer (format "*scad preview: %s*" (buffer-name)))))
+                               (get-buffer-create (format "*scad preview: %s*" (buffer-name)))))
   (when scad-preview-refresh
     (add-hook 'after-change-functions #'scad--preview-change nil 'local))
   (display-buffer scad--preview-buffer)
@@ -317,7 +317,8 @@ Key bindings:
 ;; Based on https://github.com/zk-phi/scad-preview
 (defun scad--preview-render ()
   "Render image from current buffer."
-  (when (buffer-live-p scad--preview-buffer)
+  (if (not (buffer-live-p scad--preview-buffer))
+      (scad--preview-status "Dead")
     (scad--preview-kill)
     (scad--preview-status "Render")
     (let* ((infile (make-temp-file "scad-preview-" nil ".scad"))
