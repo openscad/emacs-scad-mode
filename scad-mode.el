@@ -8,6 +8,8 @@
 ;; Package-Requires: ((emacs "26.1"))
 ;; Version:          92.0
 
+;; This file is not part of GNU Emacs.
+
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2 of the License, or
@@ -231,11 +233,13 @@ Key bindings:
   (interactive)
   (save-buffer)
   (compile (concat scad-command
-                   " -o " (expand-file-name (read-file-name
-                                             "Export to: "
-                                             nil nil nil
-                                             (concat (file-name-base buffer-file-name) ".stl")))
-                   " " buffer-file-name)))
+                   " -o " (shell-quote-argument
+                           (expand-file-name
+                            (read-file-name
+                             "Export to: "
+                             nil nil nil
+                             (concat (file-name-base buffer-file-name) ".stl"))))
+                   " " (shell-quote-argument buffer-file-name))))
 
 (defvar-local scad--preview-buffer  nil)
 (defvar-local scad--preview-camera  nil)
