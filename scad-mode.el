@@ -223,13 +223,18 @@ Key bindings:
 (defun scad-open ()
   "Open current buffer with `scad-command'."
   (interactive)
+  (save-buffer)
   (call-process scad-command nil 0 nil (buffer-file-name)))
 
 (defun scad-export ()
   "Render and export current SCAD model."
   (interactive)
+  (save-buffer)
   (compile (concat scad-command
-                   " -o " (expand-file-name (read-file-name "Export to: "))
+                   " -o " (expand-file-name (read-file-name
+                                             "Export to: "
+                                             nil nil nil
+                                             (concat (file-name-base buffer-file-name) ".stl")))
                    " " buffer-file-name)))
 
 (defvar-local scad--preview-buffer  nil)
