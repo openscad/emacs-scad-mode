@@ -246,18 +246,20 @@ Key bindings:
                              (concat (file-name-base buffer-file-name) ".stl"))))
                    " " (shell-quote-argument buffer-file-name))))
 
-(defvar-local scad--preview-buffer  nil)
-(defvar-local scad--preview-camera  nil)
-(defvar-local scad--preview-process nil)
-(defvar-local scad--preview-size    nil)
-(defvar-local scad--preview-status  nil)
-(defvar-local scad--preview-timer   nil)
-(put 'scad--preview-buffer  'permanent-local t)
-(put 'scad--preview-camera  'permanent-local t)
-(put 'scad--preview-process 'permanent-local t)
-(put 'scad--preview-size    'permanent-local t)
-(put 'scad--preview-status  'permanent-local t)
-(put 'scad--preview-timer   'permanent-local t)
+(defvar-local scad--preview-buffer       nil)
+(defvar-local scad--preview-camera       nil)
+(defvar-local scad--preview-process      nil)
+(defvar-local scad--preview-size         nil)
+(defvar-local scad--preview-mode-status nil)
+(defvar-local scad--preview-mode-camera nil)
+(defvar-local scad--preview-timer       nil)
+(put 'scad--preview-buffer      'permanent-local t)
+(put 'scad--preview-camera      'permanent-local t)
+(put 'scad--preview-process     'permanent-local t)
+(put 'scad--preview-size        'permanent-local t)
+(put 'scad--preview-mode-status 'permanent-local t)
+(put 'scad--preview-mode-camera 'permanent-local t)
+(put 'scad--preview-timer       'permanent-local t)
 
 (defvar scad-preview-mode-map
   (let ((map (make-sparse-keymap)))
@@ -276,12 +278,11 @@ Key bindings:
     map)
   "Keymap for SCAD preview buffers.")
 
-(defun scad--preview-status (&optional status)
+(defun scad--preview-status (status)
   "Update mode line of preview buffer with STATUS."
-  (setq scad--preview-status
-        (concat (apply #'format "[%d %d %d] [%d %d %d] %d"
-                       scad--preview-camera)
-                " " status))
+  (setq scad--preview-mode-camera (apply #'format "[%d %d %d] [%d %d %d] %d"
+                                         scad--preview-camera)
+        scad--preview-mode-status status)
   (force-mode-line-update))
 
 (defun scad-preview ()
@@ -320,7 +321,7 @@ Key bindings:
   "Render image from current buffer."
   (when (buffer-live-p scad--preview-buffer)
     (scad--preview-kill)
-    (scad--preview-status "Rendering...")
+    (scad--preview-status "Render")
     (let* ((infile (make-temp-file "scad-preview-" nil ".scad"))
            (outfile (concat infile ".png"))
            (buffer (current-buffer)))
@@ -339,13 +340,14 @@ Key bindings:
                                         (and (file-exists-p outfile)
                                              (> (file-attribute-size (file-attributes outfile)) 0))))
                                  (scad--preview-status "Error")
-                               (fundamental-mode)
-                               (erase-buffer)
-                               (insert-file-contents outfile)
-                               (let ((inhibit-message t)
-                                     (message-log-max nil))
-                                 (scad-preview-mode))
-                               (scad--preview-status))))
+                               (with-silent-modifications
+                                 (fundamental-mode)
+                                 (erase-buffer)
+                                 (insert-file-contents outfile)
+                                 (let ((inhibit-message t)
+                                       (message-log-max nil))
+                                   (scad-preview-mode)))
+                               (scad--preview-status ""))))
                          (delete-file outfile)
                          (delete-file infile))
              :command (list scad-command
@@ -372,8 +374,21 @@ Key bindings:
 
 (define-derived-mode scad-preview-mode image-mode "SCAD Preview"
  "Major mode for SCAD preview buffers."
- (setq mode-line-format '("" mode-line-buffer-identification (" " scad--preview-status))
-       revert-buffer-function #'scad--preview-reset))
+ (setq buffer-read-only t
+       line-spacing nil
+       cursor-type nil
+       cursor-in-non-selected-windows nil
+       left-fringe-width 1
+       right-fringe-width 1
+       left-margin-width 0
+       right-margin-width 0
+       truncate-lines nil
+       show-trailing-whitespace nil
+       display-line-numbers nil
+       fringe-indicator-alist '((truncation . nil))
+       revert-buffer-function #'scad--preview-reset
+       mode-line-position '(" " scad--preview-mode-camera)
+       mode-line-process '(" " scad--preview-mode-status)))
 
 (defun scad--preview-reset (&rest _)
   "Reset camera parameters and refresh."
