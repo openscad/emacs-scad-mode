@@ -116,9 +116,9 @@
 
 (defcustom scad-preview-refresh 1.0
   "Delay in seconds until updating preview."
-  :type 'number)
+  :type '(choice (const nil) number))
 
-(defcustom scad-preview-size '(600 . 600)
+(defcustom scad-preview-size '(800 . 800)
   "Size of preview image."
   :type '(cons integer integer))
 
@@ -245,7 +245,7 @@ Key bindings:
 (put 'scad--preview-status  'permanent-local t)
 (put 'scad--preview-timer   'permanent-local t)
 
-(defvar scad-preview-mode-map
+(defvar scad-image-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "M--") #'scad-preview-size-)
     (define-key map (kbd "M-+") #'scad-preview-size+)
@@ -276,7 +276,8 @@ Key bindings:
   (setq scad--preview-buffer (if (buffer-live-p scad--preview-buffer)
                                  scad--preview-buffer
                                (generate-new-buffer (format "*scad preview: %s*" (buffer-name)))))
-  (add-hook 'after-change-functions #'scad--preview-change nil 'local)
+  (when scad-preview-refresh
+    (add-hook 'after-change-functions #'scad--preview-change nil 'local))
   (display-buffer scad--preview-buffer)
   (let ((orig-buffer (current-buffer)))
     (with-current-buffer scad--preview-buffer
@@ -329,7 +330,7 @@ Key bindings:
                                (insert-file-contents outfile)
                                (let ((inhibit-message t)
                                      (message-log-max nil))
-                                 (scad-preview-mode))
+                                 (scad-image-mode))
                                (scad--preview-status))))
                          (delete-file outfile)
                          (delete-file infile))
@@ -353,7 +354,7 @@ Key bindings:
     (cancel-timer scad--preview-timer)
     (setq scad--preview-timer nil)))
 
-(define-derived-mode scad-preview-mode image-mode "SCADPreview"
+(define-derived-mode scad-image-mode image-mode "SCAD Preview"
  "Major mode for SCAD preview buffers."
  (setq mode-line-format '("" mode-line-buffer-identification (" " scad--preview-status))
        revert-buffer-function #'scad--preview-reset))
