@@ -35,7 +35,7 @@
   '((colorscheme . :any)
     (imgsize . :any)
     (camera . :any)
-    (views . :any))
+    (view . :any))
   "Scad specific header args.")
 
 (defun org-babel-execute:scad (body params)
@@ -43,7 +43,6 @@
   (let* ((outfile (or (alist-get :file params)
                       (error "Scad code block requires :file header argument")))
          (infile (org-babel-temp-file "scad-")))
-    (message "%S" params)
     (with-temp-file infile (insert body))
     (apply #'call-process scad-command nil 0 nil
            (delq nil
@@ -52,8 +51,8 @@
                        "--viewall"
                        (format "--colorscheme=%s"
                                (alist-get :colorscheme params scad-preview-colorscheme))
-                       (format "--views=%s" (or (alist-get :views params)
-                                                (mapconcat #'identity scad-preview-view ",")))
+                       (format "--view=%s" (or (alist-get :view params)
+                                               (mapconcat #'identity scad-preview-view ",")))
                        (when-let (camera (alist-get :camera params))
                          (format "--camera=%s" camera))
                        (when-let (imgsize (alist-get :imgsize params))
