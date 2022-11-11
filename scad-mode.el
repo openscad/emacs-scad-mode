@@ -201,6 +201,7 @@ Key bindings:
 \\{scad-mode-map}"
   :group 'scad
   :after-hook (c-update-modeline)
+  (remove-hook 'flymake-diagnostic-functions #'flymake-cc 'local)
   (add-hook 'flymake-diagnostic-functions #'scad-flymake nil 'local)
   (add-hook 'completion-at-point-functions
             #'scad-completion-at-point nil 'local)
@@ -241,7 +242,7 @@ Key bindings:
                    " " (shell-quote-argument buffer-file-name))))
 
 (defvar-local scad--preview-buffer      nil)
-(defvar-local scad--preview-process     nil)
+(defvar-local scad--preview-proc        nil)
 (defvar-local scad--preview-mode-status nil)
 (defvar-local scad--preview-mode-camera nil)
 (defvar-local scad--preview-timer       nil)
@@ -249,7 +250,7 @@ Key bindings:
 (put 'scad-preview-size         'permanent-local t)
 (put 'scad-preview-projection   'permanent-local t)
 (put 'scad--preview-buffer      'permanent-local t)
-(put 'scad--preview-process     'permanent-local t)
+(put 'scad--preview-proc        'permanent-local t)
 (put 'scad--preview-timer       'permanent-local t)
 (put 'scad--preview-mode-status 'permanent-local t)
 (put 'scad--preview-mode-camera 'permanent-local t)
@@ -327,7 +328,7 @@ Key bindings:
         (save-restriction
           (widen)
           (write-region (point-min) (point-max) infile nil 'nomsg)))
-      (setq scad--preview-process
+      (setq scad--preview-proc
             (make-process
              :noquery t
              :connection-type 'pipe
@@ -339,7 +340,7 @@ Key bindings:
                  (unwind-protect
                      (when (buffer-live-p buffer)
                        (with-current-buffer buffer
-                         (setq scad--preview-process nil)
+                         (setq scad--preview-proc nil)
                          (if (not (ignore-errors
                                     (and (file-exists-p outfile)
                                          (> (file-attribute-size (file-attributes outfile)) 0))))
@@ -371,9 +372,9 @@ Key bindings:
 
 (defun scad--preview-kill ()
   "Kill current rendering."
-  (when (process-live-p scad--preview-process)
-    (delete-process scad--preview-process)
-    (setq scad--preview-process nil))
+  (when (process-live-p scad--preview-proc)
+    (delete-process scad--preview-proc)
+    (setq scad--preview-proc nil))
   (when scad--preview-timer
     (cancel-timer scad--preview-timer)
     (setq scad--preview-timer nil)))
@@ -438,14 +439,14 @@ Key bindings:
 (defun scad-preview-size- () (interactive) (scad--preview-size (/ 1.1)))
 (defun scad-preview-size+ () (interactive) (scad--preview-size 1.1))
 
-(defvar-local scad-flymake--process nil)
+(defvar-local scad--flymake-proc nil)
 
 (defun scad-flymake (report-fn &rest _args)
   "Flymake backend, diagnostics are passed to REPORT-FN."
   (unless (executable-find scad-command)
     (error "Cannot find `%s'" scad-command))
-  (when (process-live-p scad-flymake--process)
-    (delete-process scad-flymake--process))
+  (when (process-live-p scad--flymake-proc)
+    (delete-process scad--flymake-proc))
   (let* ((buffer (current-buffer))
          (infile (make-temp-file "scad-flymake-" nil ".scad"))
          (outfile (concat infile ".ast")))
@@ -453,7 +454,7 @@ Key bindings:
       (widen)
       (write-region (point-min) (point-max) infile nil 'nomsg))
     (setq
-     scad-flymake--process
+     scad--flymake-proc
      (make-process
       :name "scad-flymake"
       :noquery t
@@ -465,7 +466,7 @@ Key bindings:
         (when (memq (process-status proc) '(exit signal))
           (unwind-protect
               (when (and (buffer-live-p buffer)
-                         (eq proc (buffer-local-value 'scad-flymake--process buffer)))
+                         (eq proc (buffer-local-value 'scad--flymake-proc buffer)))
                 (with-current-buffer (process-buffer proc)
                   (goto-char (point-min))
                   (let (diags)
