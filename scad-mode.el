@@ -58,7 +58,8 @@
   :type 'string)
 
 (defcustom scad-keywords
-  '("return" "true" "false")
+  '("return" "undef" "true" "false" "for" "each" "if" "else" "let" "intersection_for"
+    "function" "use" "include" "module")
   "SCAD keywords."
   :type '(repeat string))
 
@@ -73,13 +74,13 @@
     "norm" "cross"                                                      ;;2014.03
     "concat" "chr"                                                      ;;2015.03
     "assert" "ord"                                                      ;;2019.05
-    "is_undef" "is_list" "is_num" "is_bool" "is_string"                 ;;2019.05 type test
+    "is_undef" "is_list" "is_num" "is_bool" "is_string" "is_function"   ;;2019.05 type test
     )
   "SCAD functions."
   :type '(repeat string))
 
 (defcustom scad-modules
-  '("children" "echo" "for" "intersection_for" "if" "else"              ;;control.cc
+  '("children" "echo"                                                   ;;control.cc
     "cube" "sphere" "cylinder" "polyhedron" "square" "circle" "polygon" ;;primitives.cc
     "scale" "rotate" "translate" "mirror" "multmatrix"                  ;;transform.cc
     "union" "difference" "intersection"                                 ;;csgops.cc
@@ -93,7 +94,7 @@
     "projection"                                                        ;;projection.cc
     "minkowski" "hull" "resize"                                         ;;cgaladv.cc
     "parent_module"                                                     ;;2014.03
-    "let" "offset" "text"                                               ;;2015.03
+    "offset" "text"                                                     ;;2015.03
     )
   "SCAD modules."
   :type '(repeat string))
@@ -194,8 +195,7 @@ Defaults to K&R if nil. If you want to set the style with file
   local variables use the `c-file-style' variable.")
 
 (defvar scad-completions
-  `("module" "function" "use" "include"
-    ,@scad-keywords ,@scad-functions ,@scad-modules)
+  (append scad-keywords scad-functions scad-modules)
   "List of known words for completion.")
 
 (put 'scad-mode 'c-mode-prefix "scad-")
