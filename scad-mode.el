@@ -201,6 +201,7 @@ Key bindings:
 \\{scad-mode-map}"
   :group 'scad
   :after-hook (c-update-modeline)
+  (add-hook 'flymake-diagnostic-functions #'scad-flymake nil 'local)
   (add-hook 'completion-at-point-functions
             #'scad-completion-at-point nil 'local)
   (c-initialize-cc-mode t)
@@ -239,8 +240,8 @@ Key bindings:
                              (concat (file-name-base buffer-file-name) ".stl"))))
                    " " (shell-quote-argument buffer-file-name))))
 
-(defvar-local scad--preview-buffer       nil)
-(defvar-local scad--preview-process      nil)
+(defvar-local scad--preview-buffer      nil)
+(defvar-local scad--preview-process     nil)
 (defvar-local scad--preview-mode-status nil)
 (defvar-local scad--preview-mode-camera nil)
 (defvar-local scad--preview-timer       nil)
@@ -328,39 +329,45 @@ Key bindings:
           (write-region (point-min) (point-max) infile nil 'nomsg)))
       (setq scad--preview-process
             (make-process
-             :name scad-command
+             :noquery t
+             :connection-type 'pipe
+             :name "scad-preview"
              :buffer "*scad output*"
-             :sentinel (lambda (&rest _)
-                         (when (buffer-live-p buffer)
-                           (with-current-buffer buffer
-                             (setq scad--preview-process nil)
-                             (if (not (ignore-errors
-                                        (and (file-exists-p outfile)
-                                             (> (file-attribute-size (file-attributes outfile)) 0))))
-                                 (scad--preview-status "Error")
-                               (with-silent-modifications
-                                 (fundamental-mode)
-                                 (erase-buffer)
-                                 (insert-file-contents outfile)
-                                 (let ((inhibit-message t)
-                                       (message-log-max nil))
-                                   (scad-preview-mode)))
-                               (scad--preview-status ""))))
-                         (delete-file outfile)
-                         (delete-file infile))
-             :command (list scad-command
-                            "-o" outfile
-                            "--preview"
-                            (format "--projection=%s" scad-preview-projection)
-                            (format "--imgsize=%d,%d"
-                                    (car scad-preview-size)
-                                    (cdr scad-preview-size))
-                            (format "--view=%s"
-                                    (mapconcat #'identity scad-preview-view ","))
-                            (format "--camera=%s"
-                                    (mapconcat #'number-to-string scad-preview-camera ","))
-                            (format "--colorscheme=%s" scad-preview-colorscheme)
-                            infile))))))
+             :sentinel
+             (lambda (proc _event)
+               (when (memq (process-status proc) '(exit signal))
+                 (unwind-protect
+                     (when (buffer-live-p buffer)
+                       (with-current-buffer buffer
+                         (setq scad--preview-process nil)
+                         (if (not (ignore-errors
+                                    (and (file-exists-p outfile)
+                                         (> (file-attribute-size (file-attributes outfile)) 0))))
+                             (scad--preview-status "Error")
+                           (with-silent-modifications
+                             (fundamental-mode)
+                             (erase-buffer)
+                             (insert-file-contents outfile)
+                             (let ((inhibit-message t)
+                                   (message-log-max nil))
+                               (scad-preview-mode)))
+                           (scad--preview-status ""))))
+                   (delete-file outfile)
+                   (delete-file infile))))
+             :command
+             (list scad-command
+                   "-o" outfile
+                   "--preview"
+                   (format "--projection=%s" scad-preview-projection)
+                   (format "--imgsize=%d,%d"
+                           (car scad-preview-size)
+                           (cdr scad-preview-size))
+                   (format "--view=%s"
+                           (mapconcat #'identity scad-preview-view ","))
+                   (format "--camera=%s"
+                           (mapconcat #'number-to-string scad-preview-camera ","))
+                   (format "--colorscheme=%s" scad-preview-colorscheme)
+                   infile))))))
 
 (defun scad--preview-kill ()
   "Kill current rendering."
@@ -430,6 +437,47 @@ Key bindings:
 (defun scad-preview-distance+ () (interactive) (scad--preview-move 6 -100))
 (defun scad-preview-size- () (interactive) (scad--preview-size (/ 1.1)))
 (defun scad-preview-size+ () (interactive) (scad--preview-size 1.1))
+
+(defvar-local scad-flymake--process nil)
+
+(defun scad-flymake (report-fn &rest _args)
+  "Flymake backend, diagnostics are passed to REPORT-FN."
+  (unless (executable-find scad-command)
+    (error "Cannot find `%s'" scad-command))
+  (when (process-live-p scad-flymake--process)
+    (delete-process scad-flymake--process))
+  (let* ((buffer (current-buffer))
+         (infile (make-temp-file "scad-flymake-" nil ".scad"))
+         (outfile (concat infile ".ast")))
+    (save-restriction
+      (widen)
+      (write-region (point-min) (point-max) infile nil 'nomsg))
+    (setq
+     scad-flymake--process
+     (make-process
+      :name "scad-flymake"
+      :noquery t
+      :connection-type 'pipe
+      :buffer (generate-new-buffer " *scad-flymake*")
+      :command (list scad-command "-o" outfile infile)
+      :sentinel
+      (lambda (proc _event)
+        (when (memq (process-status proc) '(exit signal))
+          (unwind-protect
+              (when (and (buffer-live-p buffer)
+                         (eq proc (buffer-local-value 'scad-flymake--process buffer)))
+                (with-current-buffer (process-buffer proc)
+                  (goto-char (point-min))
+                  (let (diags)
+                    (while (search-forward-regexp "^\\(ERROR\\|WARNING\\): \\(.*?\\),? in file [^,]+, line \\([0-9]+\\)" nil t)
+                      (let ((msg (match-string 2))
+                            (type (if (equal (match-string 1) "ERROR") :error :warning))
+                            (region (flymake-diag-region buffer (string-to-number (match-string 3)))))
+                        (push (flymake-make-diagnostic buffer (car region) (cdr region) type msg) diags)))
+                    (funcall report-fn (nreverse diags)))))
+            (delete-file outfile)
+            (delete-file infile)
+            (kill-buffer (process-buffer proc)))))))))
 
 (provide 'scad-mode)
 ;;; scad-mode.el ends here
