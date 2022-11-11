@@ -297,6 +297,9 @@ Key bindings:
   (let ((orig-buffer (current-buffer)))
     (with-current-buffer scad--preview-buffer
       (setq scad--preview-buffer orig-buffer)
+      (let ((inhibit-message t)
+            (message-log-max nil))
+        (scad-preview-mode))
       (add-hook 'kill-buffer-hook #'scad--preview-kill nil t)
       (scad--preview-reset))))
 
