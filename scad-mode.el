@@ -5,7 +5,7 @@
 ;; Created:          2010
 ;; Keywords:         languages
 ;; Homepage:         https://github.com/openscad/emacs-scad-mode
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "27.1"))
 ;; Version:          92.0
 
 ;; This file is not part of GNU Emacs.
@@ -374,21 +374,21 @@ Key bindings:
 
 (define-derived-mode scad-preview-mode image-mode "SCAD Preview"
  "Major mode for SCAD preview buffers."
- (setq buffer-read-only t
-       line-spacing nil
-       cursor-type nil
-       cursor-in-non-selected-windows nil
-       left-fringe-width 1
-       right-fringe-width 1
-       left-margin-width 0
-       right-margin-width 0
-       truncate-lines nil
-       show-trailing-whitespace nil
-       display-line-numbers nil
-       fringe-indicator-alist '((truncation . nil))
-       revert-buffer-function #'scad--preview-reset
-       mode-line-position '(" " scad--preview-mode-camera)
-       mode-line-process '(" " scad--preview-mode-status)))
+ (setq-local buffer-read-only t
+             line-spacing nil
+             cursor-type nil
+             cursor-in-non-selected-windows nil
+             left-fringe-width 1
+             right-fringe-width 1
+             left-margin-width 0
+             right-margin-width 0
+             truncate-lines nil
+             show-trailing-whitespace nil
+             display-line-numbers nil
+             fringe-indicator-alist '((truncation . nil))
+             revert-buffer-function #'scad--preview-reset
+             mode-line-position '(" " scad--preview-mode-camera)
+             mode-line-process '(" " scad--preview-mode-status)))
 
 (defun scad--preview-reset (&rest _)
   "Reset camera parameters and refresh."
