@@ -6,7 +6,7 @@
 ;; Keywords:         languages
 ;; Homepage:         https://github.com/openscad/emacs-scad-mode
 ;; Package-Requires: ((emacs "27.1"))
-;; Version:          92.0
+;; Version:          93.0
 
 ;; This file is not part of GNU Emacs.
 
