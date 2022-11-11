@@ -60,7 +60,7 @@
 (defcustom scad-keywords
   '("return" "true" "false")
   "SCAD keywords."
-  :type 'list)
+  :type '(repeat string))
 
 (defcustom scad-functions
   '("cos" "acos" "sin" "asin" "tan" "atan" "atan2"                      ;;func.cc
@@ -76,7 +76,7 @@
     "is_undef" "is_list" "is_num" "is_bool" "is_string"                 ;;2019.05 type test
     )
   "SCAD functions."
-  :type 'list)
+  :type '(repeat string))
 
 (defcustom scad-modules
   '("children" "echo" "for" "intersection_for" "if" "else"              ;;control.cc
@@ -96,13 +96,13 @@
     "let" "offset" "text"                                               ;;2015.03
     )
   "SCAD modules."
-  :type 'list)
+  :type '(repeat string))
 
 (defcustom scad-deprecated
   '("child" "assign" "dxf_linear_extrude" "dxf_rotate_extrude"
     "import_stl" "import_off" "import_dxf")
   "SCAD deprecated modules and functions."
-  :type 'list)
+  :type '(repeat string))
 
 (defcustom scad-operators
   '("+" "-" "*" "/" "%"
@@ -110,7 +110,7 @@
     "<" "<=" "==" "!=" ">" ">="
     "?" ":" "=")
   "SCAD operators."
-  :type 'list)
+  :type '(repeat string))
 
 (defcustom scad-preview-camera '(0 0 0 50 0 20 500)
   "Default parameters for the Gimbal camera."
