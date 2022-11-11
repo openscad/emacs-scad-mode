@@ -245,7 +245,7 @@ Key bindings:
 (put 'scad--preview-status  'permanent-local t)
 (put 'scad--preview-timer   'permanent-local t)
 
-(defvar scad-image-mode-map
+(defvar scad-preview-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "M--") #'scad-preview-size-)
     (define-key map (kbd "M-+") #'scad-preview-size+)
@@ -330,7 +330,7 @@ Key bindings:
                                (insert-file-contents outfile)
                                (let ((inhibit-message t)
                                      (message-log-max nil))
-                                 (scad-image-mode))
+                                 (scad-preview-mode))
                                (scad--preview-status))))
                          (delete-file outfile)
                          (delete-file infile))
@@ -354,7 +354,7 @@ Key bindings:
     (cancel-timer scad--preview-timer)
     (setq scad--preview-timer nil)))
 
-(define-derived-mode scad-image-mode image-mode "SCAD Preview"
+(define-derived-mode scad-preview-mode image-mode "SCAD Preview"
  "Major mode for SCAD preview buffers."
  (setq mode-line-format '("" mode-line-buffer-identification (" " scad--preview-status))
        revert-buffer-function #'scad--preview-reset))
