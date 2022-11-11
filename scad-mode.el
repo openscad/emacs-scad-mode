@@ -120,7 +120,7 @@
   "Delay in seconds until updating preview."
   :type '(choice (const nil) number))
 
-(defcustom scad-preview-size '(800 . 800)
+(defcustom scad-preview-size '(1000 . 1000)
   "Size of preview image."
   :type '(cons integer integer))
 
