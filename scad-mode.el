@@ -310,6 +310,7 @@ Key bindings:
     (let ((buffer scad--preview-buffer))
       (with-current-buffer buffer
         (scad--preview-kill)
+        (scad--preview-status "Stale")
         (setq scad--preview-timer
               (run-with-timer
                scad-preview-refresh nil
@@ -375,7 +376,7 @@ Key bindings:
     (cancel-timer scad--preview-timer)
     (setq scad--preview-timer nil)))
 
-(define-derived-mode scad-preview-mode image-mode "SCAD Preview"
+(define-derived-mode scad-preview-mode image-mode "SCAD/Preview"
  "Major mode for SCAD preview buffers."
  (setq-local buffer-read-only t
              line-spacing nil
