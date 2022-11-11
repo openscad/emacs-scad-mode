@@ -112,6 +112,10 @@
   "SCAD operators."
   :type '(repeat string))
 
+(defcustom scad-preview-projection 'perspective
+  "Preview projection."
+  :type '(choice (const ortho) (const perspective)))
+
 (defcustom scad-preview-camera '(0 0 0 50 0 20 500)
   "Default parameters for the Gimbal camera."
   :type '(repeat integer))
@@ -247,22 +251,22 @@ Key bindings:
                    " " (shell-quote-argument buffer-file-name))))
 
 (defvar-local scad--preview-buffer       nil)
-(defvar-local scad--preview-camera       nil)
 (defvar-local scad--preview-process      nil)
-(defvar-local scad--preview-size         nil)
 (defvar-local scad--preview-mode-status nil)
 (defvar-local scad--preview-mode-camera nil)
 (defvar-local scad--preview-timer       nil)
+(put 'scad-preview-camera       'permanent-local t)
+(put 'scad-preview-size         'permanent-local t)
+(put 'scad-preview-projection   'permanent-local t)
 (put 'scad--preview-buffer      'permanent-local t)
-(put 'scad--preview-camera      'permanent-local t)
 (put 'scad--preview-process     'permanent-local t)
-(put 'scad--preview-size        'permanent-local t)
+(put 'scad--preview-timer       'permanent-local t)
 (put 'scad--preview-mode-status 'permanent-local t)
 (put 'scad--preview-mode-camera 'permanent-local t)
-(put 'scad--preview-timer       'permanent-local t)
 
 (defvar scad-preview-mode-map
   (let ((map (make-sparse-keymap)))
+    (define-key map "p" #'scad-preview-projection)
     (define-key map (kbd "M--") #'scad-preview-size-)
     (define-key map (kbd "M-+") #'scad-preview-size+)
     (define-key map "-" #'scad-preview-distance-)
@@ -281,7 +285,7 @@ Key bindings:
 (defun scad--preview-status (status)
   "Update mode line of preview buffer with STATUS."
   (setq scad--preview-mode-camera (apply #'format "[%d %d %d] [%d %d %d] %d"
-                                         scad--preview-camera)
+                                         scad-preview-camera)
         scad--preview-mode-status status)
   (force-mode-line-update))
 
@@ -357,13 +361,14 @@ Key bindings:
              :command (list scad-command
                             "-o" outfile
                             "--preview"
+                            (format "--projection=%s" scad-preview-projection)
                             (format "--imgsize=%d,%d"
-                                    (car scad--preview-size)
-                                    (cdr scad--preview-size))
+                                    (car scad-preview-size)
+                                    (cdr scad-preview-size))
                             (format "--view=%s"
                                     (mapconcat #'identity scad-preview-view ","))
                             (format "--camera=%s"
-                                    (mapconcat #'number-to-string scad--preview-camera ","))
+                                    (mapconcat #'number-to-string scad-preview-camera ","))
                             (format "--colorscheme=%s" scad-preview-colorscheme)
                             infile))))))
 
@@ -396,19 +401,29 @@ Key bindings:
 
 (defun scad--preview-reset (&rest _)
   "Reset camera parameters and refresh."
-  (setq scad--preview-camera (copy-sequence scad-preview-camera)
-        scad--preview-size (copy-tree scad-preview-size))
+  (setq-local scad-preview-camera (copy-sequence (default-value 'scad-preview-camera))
+              scad-preview-size (copy-tree (default-value 'scad-preview-size))
+              scad-preview-projection (default-value 'scad-preview-projection))
   (scad--preview-render))
 
 (defun scad--preview-move (idx val)
   "Increment camera IDX by VAL."
-  (cl-incf (nth idx scad--preview-camera) val)
+  (cl-incf (nth idx scad-preview-camera) val)
   (scad--preview-render))
 
 (defun scad--preview-size (factor)
   "Resize preview by FACTOR."
-  (setf (car scad--preview-size) (round (* (car scad--preview-size) factor))
-        (cdr scad--preview-size) (round (* (cdr scad--preview-size) factor)))
+  (setf (car scad-preview-size) (round (* (car scad-preview-size) factor))
+        (cdr scad-preview-size) (round (* (cdr scad-preview-size) factor)))
+  (scad--preview-render))
+
+(defun scad-preview-projection ()
+  "Toggle projection."
+  (interactive)
+  (setq-local scad-preview-projection
+              (if (eq scad-preview-projection 'ortho)
+                  'perspective
+                'ortho))
   (scad--preview-render))
 
 (defun scad-preview-translate-x+ () (interactive) (scad--preview-move 0 10))

@@ -21,7 +21,7 @@
 
 * Org Babel support
 
-#+begin_src scad :file example.png :colorscheme Tomorrow :imgsize 200,200
+#+begin_src scad :file example.png :colorscheme Tomorrow :size 200,200
   for (y=[0:2:20]) {
       translate([0,0,y+1])
           cube([30-2*y,30-2*y,2], true);
