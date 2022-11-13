@@ -382,16 +382,18 @@ Key bindings:
               scad-preview-projection (default-value 'scad-preview-projection))
   (scad--preview-render))
 
-(defun scad--preview-move (idx val)
-  "Increment camera IDX by VAL."
-  (cl-incf (nth idx scad-preview-camera) val)
-  (scad--preview-render))
-
-(defun scad--preview-size (factor)
-  "Resize preview by FACTOR."
-  (setf (car scad-preview-size) (round (* (car scad-preview-size) factor))
+(defun scad-preview-size+ (&optional factor)
+  "Grow image size by FACTOR."
+  (interactive)
+  (setf factor (or factor 1.1)
+        (car scad-preview-size) (round (* (car scad-preview-size) factor))
         (cdr scad-preview-size) (round (* (cdr scad-preview-size) factor)))
   (scad--preview-render))
+
+(defun scad-preview-size- (&optional factor)
+  "Shrink image size by FACTOR."
+  (interactive)
+  (scad-preview-size+ (/ (or factor 1.1))))
 
 (defun scad-preview-projection ()
   "Toggle projection."
@@ -402,20 +404,28 @@ Key bindings:
                 'ortho))
   (scad--preview-render))
 
-(defun scad-preview-translate-x+ () (interactive) (scad--preview-move 0 10))
-(defun scad-preview-translate-x- () (interactive) (scad--preview-move 0 -10))
-(defun scad-preview-translate-z+ () (interactive) (scad--preview-move 2 10))
-(defun scad-preview-translate-z- () (interactive) (scad--preview-move 2 -10))
-(defun scad-preview-rotate-x+ () (interactive) (scad--preview-move 3 20))
-(defun scad-preview-rotate-x- () (interactive) (scad--preview-move 3 -20))
-(defun scad-preview-rotate-y+ () (interactive) (scad--preview-move 4 20))
-(defun scad-preview-rotate-y- () (interactive) (scad--preview-move 4 -20))
-(defun scad-preview-rotate-z+ () (interactive) (scad--preview-move 5 20))
-(defun scad-preview-rotate-z- () (interactive) (scad--preview-move 5 -20))
-(defun scad-preview-distance- () (interactive) (scad--preview-move 6 100))
-(defun scad-preview-distance+ () (interactive) (scad--preview-move 6 -100))
-(defun scad-preview-size- () (interactive) (scad--preview-size (/ 1.1)))
-(defun scad-preview-size+ () (interactive) (scad--preview-size 1.1))
+(defmacro scad--define-preview-move (name idx off)
+  "Define camera move function NAME which increments IDX by OFF."
+  `(defun ,(intern (format "scad-preview-%s" name)) (&optional offset)
+     "Move camera by OFFSET."
+     (interactive)
+     (cl-incf (nth ,idx scad-preview-camera) (or offset ,off))
+     (scad--preview-render)))
+
+(scad--define-preview-move translate-x+ 0 10)
+(scad--define-preview-move translate-x- 0 -10)
+(scad--define-preview-move translate-y+ 1 10)
+(scad--define-preview-move translate-y- 1 -10)
+(scad--define-preview-move translate-z+ 2 10)
+(scad--define-preview-move translate-z- 2 -10)
+(scad--define-preview-move rotate-x+ 3 20)
+(scad--define-preview-move rotate-x- 3 -20)
+(scad--define-preview-move rotate-y+ 4 20)
+(scad--define-preview-move rotate-y- 4 -20)
+(scad--define-preview-move rotate-z+ 5 20)
+(scad--define-preview-move rotate-z- 5 -20)
+(scad--define-preview-move distance- 6 100)
+(scad--define-preview-move distance+ 6 -100)
 
 (defvar-local scad--flymake-proc nil)
 
