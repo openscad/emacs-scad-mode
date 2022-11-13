@@ -131,7 +131,7 @@ Options are axes, crosshairs, edges, scales, wireframe."
   :type '(repeat string))
 
 (defvar scad-mode-map
-  (let ((map (make-sparse-keymap)))
+  (let ((map (c-make-inherited-keymap)))
     (define-key map "\C-c\C-c" #'scad-preview)
     (define-key map "\C-c\C-o" #'scad-open)
     (define-key map "\C-c\C-e" #'scad-export)
@@ -187,7 +187,7 @@ Options are axes, crosshairs, edges, scales, wireframe."
 (add-to-list 'auto-mode-alist '("\\.scad$" . scad-mode))
 
 ;;;###autoload
-(define-derived-mode scad-mode c-mode "SCAD"
+(define-derived-mode scad-mode prog-mode "SCAD"
   "Major mode for editing OpenSCAD code.
 
 To see what version of CC Mode you are running, enter `\\[c-version]'.
@@ -204,12 +204,10 @@ Key bindings:
   (add-hook 'completion-at-point-functions
             #'scad-completion-at-point nil 'local)
   (c-initialize-cc-mode t)
-  ;; (setq local-abbrev-table scad-mode-abbrev-table
-  ;;       abbrev-mode t)
-  (use-local-map scad-mode-map)
-  (c-set-offset (quote cpp-macro) 0 nil)
+  (setq abbrev-mode t)
   (c-init-language-vars scad-mode)
   (c-basic-common-init 'scad-mode c-default-style)
+  (c-set-offset 'cpp-macro 0 nil)
   (c-font-lock-init)
   (c-run-mode-hooks 'c-mode-common-hook))
 
