@@ -38,9 +38,6 @@
   (require 'cc-fonts)
   (require 'cl-lib))
 
-(eval-and-compile
-  (c-add-language 'scad-mode 'c-mode))
-
 (defgroup scad nil
   "A major mode for editing OpenSCAD code."
   :group 'languages
