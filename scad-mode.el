@@ -160,8 +160,8 @@ Options are axes, crosshairs, edges, scales, wireframe."
 (defvar scad-font-lock-keywords
   `(("\\(module\\|function\\)[ \t]+\\(\\sw+\\)" (1 'font-lock-keyword-face nil) (2 'font-lock-function-name-face nil t))
     ("\\(use\\|include\\)[ \t]*<\\([^>]+\\)>" (1 'font-lock-preprocessor-face nil) (2 'font-lock-type-face nil t))
-    ("<\\(\\sw+\\)>" (1 'font-lock-builtin-face nil))
-    ("$\\(\\sw+\\)" (1 'font-lock-builtin-face nil))
+    ("<\\(\\sw+\\)>" (0 'font-lock-builtin-face nil))
+    ("$\\(\\sw+\\)" (0 'font-lock-builtin-face nil))
     (,(regexp-opt scad-keywords 'words)   . font-lock-keyword-face)
     (,(regexp-opt scad-modules 'words)    . font-lock-builtin-face)
     (,(regexp-opt scad-functions 'words)  . font-lock-function-name-face)
