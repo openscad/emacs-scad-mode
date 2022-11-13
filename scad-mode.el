@@ -166,7 +166,7 @@ Options are axes, crosshairs, edges, scales, wireframe."
 (put 'scad-mode 'c-mode-prefix "scad-")
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.scad$" . scad-mode))
+(add-to-list 'auto-mode-alist '("\\.scad\\'" . scad-mode))
 
 ;;;###autoload
 (define-derived-mode scad-mode prog-mode "SCAD"
