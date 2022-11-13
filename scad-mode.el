@@ -139,29 +139,14 @@ Options are axes, crosshairs, edges, scales, wireframe."
 
 (defvar scad-mode-syntax-table
   (let ((st (make-syntax-table)))
-    ;; support comment style: // and /* ... */
-    (modify-syntax-entry ?\/ ". 124b" st)
-    (modify-syntax-entry ?\n "> b" st)
-    (modify-syntax-entry ?* ". 23" st)
-    ;; Extra punctuation
-    (modify-syntax-entry ?+  "." st)
-    (modify-syntax-entry ?-  "." st)
-    (modify-syntax-entry ?%  "." st)
-    (modify-syntax-entry ?<  "." st)
-    (modify-syntax-entry ?>  "." st)
-    (modify-syntax-entry ?&  "." st)
-    (modify-syntax-entry ?:  "." st)
-    (modify-syntax-entry ?|  "." st)
-    (modify-syntax-entry ?=  "." st)
-    (modify-syntax-entry ?\;  "." st)
+    (c-populate-syntax-table st)
     st)
   "Syntax table for `scad-mode'.")
 
 (defvar scad-font-lock-keywords
   `(("\\(module\\|function\\)[ \t]+\\(\\sw+\\)" (1 'font-lock-keyword-face nil) (2 'font-lock-function-name-face nil t))
     ("\\(use\\|include\\)[ \t]*<\\([^>]+\\)>" (1 'font-lock-preprocessor-face nil) (2 'font-lock-type-face nil t))
-    ("<\\(\\sw+\\)>" (0 'font-lock-builtin-face nil))
-    ("$\\(\\sw+\\)" (0 'font-lock-builtin-face nil))
+    ("<\\(\\sw+\\)>\\|$\\(\\sw+\\)" . font-lock-builtin-face)
     (,(regexp-opt scad-keywords 'words)   . font-lock-keyword-face)
     (,(regexp-opt scad-modules 'words)    . font-lock-builtin-face)
     (,(regexp-opt scad-functions 'words)  . font-lock-function-name-face)
@@ -203,9 +188,8 @@ Key bindings:
   (c-initialize-cc-mode t)
   (setq abbrev-mode t)
   (c-init-language-vars scad-mode)
-  (c-basic-common-init 'scad-mode c-default-style)
+  (c-common-init 'scad-mode)
   (c-set-offset 'cpp-macro 0 nil)
-  (c-font-lock-init)
   (c-run-mode-hooks 'c-mode-common-hook))
 
 (defun scad-completion-at-point ()
