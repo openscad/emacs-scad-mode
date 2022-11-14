@@ -408,9 +408,10 @@ Key bindings:
   "Define camera move function NAME which increments IDX by OFF."
   `(defun ,(intern (format "scad-preview-%s" name)) (&optional offset)
      "Move camera by OFFSET."
-     (interactive "p")
+     (interactive "P")
      (cl-incf (nth ,idx scad-preview-camera)
-              (* (cl-signum ,off) (or offset ,(abs off))))
+              (* (cl-signum ,off)
+                 (if offset (prefix-numeric-value offset) ,(abs off))))
      (scad--preview-render)))
 
 (scad--define-preview-move translate-x+ 0 10)
