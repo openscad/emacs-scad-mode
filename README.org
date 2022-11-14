@@ -34,3 +34,8 @@
 
 Install via =M-x package-install RET scad-mode RET= from NonGNU ELPA or MELPA.
 After the installation =*.scad= files will be opened with =scad-mode=.
+
+* Related packages
+
+- [[https://github.com/lenbok/scad-dbus][scad-dbus]]: Interact with a running OpenSCAD instance from Emacs via DBUS
+- =lsp-mode= or =eglot=: The =openscad-lsp= server can be used with =scad-mode=
