@@ -128,9 +128,10 @@
 Options are axes, crosshairs, edges, scales, wireframe."
   :type '(repeat string))
 
-(defcustom scad-export-ext ".stl"
+(defcustom scad-export-extension ".stl"
   "Extension (file type) for output data file via `scad-export'.
-Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png, .echo, .ast, .term, .nef3, .nefdbg."
+Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
+.echo, .ast, .term, .nef3, .nefdbg."
   :type 'string)
 
 (defvar scad-mode-map
@@ -217,7 +218,8 @@ Key bindings:
    (list (read-file-name
           "Export to: "
           nil nil nil
-          (concat (file-name-base (buffer-file-name)) scad-export-ext))))
+          (concat (file-name-base (buffer-file-name))
+                  scad-export-extension))))
   (save-buffer)
   (compile (concat scad-command
                    " -o " (shell-quote-argument (expand-file-name file))
