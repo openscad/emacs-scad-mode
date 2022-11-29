@@ -128,6 +128,11 @@
 Options are axes, crosshairs, edges, scales, wireframe."
   :type '(repeat string))
 
+(defcustom scad-export-ext ".stl"
+  "Extension (file type) for output data file via `scad-export'.
+Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png, .echo, .ast, .term, .nef3, .nefdbg."
+  :type 'string)
+
 (defvar scad-mode-map
   (let ((map (c-make-inherited-keymap)))
     (define-key map "\C-c\C-c" #'scad-preview)
@@ -212,7 +217,7 @@ Key bindings:
    (list (read-file-name
           "Export to: "
           nil nil nil
-          (concat (file-name-base (buffer-file-name)) ".stl"))))
+          (concat (file-name-base (buffer-file-name)) scad-export-ext))))
   (save-buffer)
   (compile (concat scad-command
                    " -o " (shell-quote-argument (expand-file-name file))
