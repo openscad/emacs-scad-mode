@@ -41,7 +41,7 @@
 
 (defgroup scad nil
   "A major mode for editing OpenSCAD code."
-  :link '(url-link "https://github.com/openscad/emacs-scad-mode")
+  :link '(url-link :tag "Homepage" "https://github.com/openscad/emacs-scad-mode")
   :group 'languages
   :prefix "scad-")
 
