@@ -5,7 +5,7 @@
 ;; Created:          2010
 ;; Keywords:         languages
 ;; Homepage:         https://github.com/openscad/emacs-scad-mode
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "27.1") (compat "29.1.3.4"))
 ;; Version:          93.2
 
 ;; This file is not part of GNU Emacs.
@@ -26,13 +26,14 @@
 ;;; Commentary:
 ;;
 ;; This is a major-mode to implement the SCAD constructs and
-;; font-locking for OpenSCAD. Install the package from NonGNU ELPA or
+;; font-locking for OpenSCAD.  Install the package from NonGNU ELPA or
 ;; MELPA:
 ;;
 ;; M-x install-package RET scad-mode RET
 
 ;;; Code:
 
+(require 'compat)
 (require 'cc-mode)
 (eval-when-compile
   (require 'cc-langs)
@@ -136,15 +137,14 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 .echo, .ast, .term, .nef3, .nefdbg."
   :type 'string)
 
-(defvar scad-mode-map
-  (let ((map (c-make-inherited-keymap)))
-    (define-key map "\C-c\C-c" #'scad-preview)
-    (define-key map "\C-c\C-o" #'scad-open)
-    (define-key map "\C-c\C-e" #'scad-export)
-    (define-key map "\t" #'indent-for-tab-command)
-    (define-key map "\M-\t" #'completion-at-point)
-    map)
-  "Keymap for `scad-mode'.")
+(defvar-keymap scad-mode-map
+  :doc "Keymap for `scad-mode'."
+  :parent c-mode-base-map
+  "C-c C-c" #'scad-preview
+  "C-c C-o" #'scad-open
+  "C-c C-e" #'scad-export
+  "TAB" #'indent-for-tab-command
+  "M-TAB" #'completion-at-point)
 
 (defvar scad-mode-syntax-table
   (let ((st (make-syntax-table)))
@@ -179,23 +179,13 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 
 ;;;###autoload
 (define-derived-mode scad-mode prog-mode "SCAD"
-  "Major mode for editing OpenSCAD code.
-
-To see what version of CC Mode you are running, enter `\\[c-version]'.
-
-The hook `c-mode-common-hook' is run with no args at mode
-initialization, then `scad-mode-hook'.
-
-Key bindings:
-\\{scad-mode-map}"
+  "Major mode for editing OpenSCAD code."
   :group 'scad
   :after-hook (c-update-modeline)
-  (remove-hook 'flymake-diagnostic-functions #'flymake-cc 'local)
   (add-hook 'flymake-diagnostic-functions #'scad-flymake nil 'local)
   (add-hook 'completion-at-point-functions
             #'scad-completion-at-point nil 'local)
   (c-initialize-cc-mode t)
-  (setq abbrev-mode t)
   (c-init-language-vars scad-mode)
   (c-common-init 'scad-mode)
   (c-set-offset 'cpp-macro 0 nil)
@@ -241,23 +231,21 @@ Key bindings:
 (put 'scad--preview-mode-status 'permanent-local t)
 (put 'scad--preview-mode-camera 'permanent-local t)
 
-(defvar scad-preview-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "p" #'scad-preview-projection)
-    (define-key map (kbd "M--") #'scad-preview-size-)
-    (define-key map (kbd "M-+") #'scad-preview-size+)
-    (define-key map "-" #'scad-preview-distance-)
-    (define-key map "+" #'scad-preview-distance+)
-    (define-key map [right] #'scad-preview-rotate-z-)
-    (define-key map [left] #'scad-preview-rotate-z+)
-    (define-key map [up] #'scad-preview-rotate-x+)
-    (define-key map [down] #'scad-preview-rotate-x-)
-    (define-key map [M-left] #'scad-preview-translate-x+)
-    (define-key map [M-right] #'scad-preview-translate-x-)
-    (define-key map [M-up] #'scad-preview-translate-z-)
-    (define-key map [M-down] #'scad-preview-translate-z+)
-    map)
-  "Keymap for SCAD preview buffers.")
+(defvar-keymap scad-preview-mode-map
+  :doc "Keymap for SCAD preview buffers."
+  "p" #'scad-preview-projection
+  "M--" #'scad-preview-size-
+  "M-+" #'scad-preview-size+
+  "-" #'scad-preview-distance-
+  "+" #'scad-preview-distance+
+  "<right>" #'scad-preview-rotate-z-
+  "<left>" #'scad-preview-rotate-z+
+  "<up>" #'scad-preview-rotate-x+
+  "<down>" #'scad-preview-rotate-x-
+  "M-<left>" #'scad-preview-translate-x+
+  "M-<right>" #'scad-preview-translate-x-
+  "M-<up>" #'scad-preview-translate-z-
+  "M-<down>" #'scad-preview-translate-z+)
 
 (defun scad--preview-status (status)
   "Update mode line of preview buffer with STATUS."
