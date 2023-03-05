@@ -5,7 +5,7 @@
 ;; Created:          2010
 ;; Keywords:         languages
 ;; Homepage:         https://github.com/openscad/emacs-scad-mode
-;; Package-Requires: ((emacs "27.1") (compat "29.1.3.4"))
+;; Package-Requires: ((emacs "27.1") (compat "29.1.4.0"))
 ;; Version:          93.2
 
 ;; This file is not part of GNU Emacs.
@@ -120,7 +120,7 @@
 
 (defcustom scad-preview-size '(1000 . 1000)
   "Size of preview image."
-  :type '(cons integer integer))
+  :type '(cons natnum natnum))
 
 (defcustom scad-preview-colorscheme "Tomorrow"
   "Colorscheme for rendering preview."
