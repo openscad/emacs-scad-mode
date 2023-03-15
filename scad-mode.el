@@ -296,7 +296,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
       (scad--preview-status "Dead")
     (scad--preview-kill)
     (scad--preview-status "Render")
-    (let* ((infile (make-temp-file (expand-file-name "#emacs-scad-preview#")))
+    (let* ((infile (make-temp-file "scad-preview-" nil ".scad"))
            (outfile (concat infile ".png"))
            (buffer (current-buffer)))
       (with-current-buffer scad--preview-buffer
@@ -435,7 +435,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
   (when (process-live-p scad--flymake-proc)
     (delete-process scad--flymake-proc))
   (let* ((buffer (current-buffer))
-         (infile (make-temp-file (expand-file-name "#emacs-scad-flymake#")))
+         (infile (make-temp-file "scad-flymake-" nil ".scad"))
          (outfile (concat infile ".ast")))
     (save-restriction
       (widen)
