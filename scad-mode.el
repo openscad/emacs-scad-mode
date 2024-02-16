@@ -1,12 +1,12 @@
 ;;; scad-mode.el --- A major mode for editing OpenSCAD code -*- lexical-binding: t -*-
 
-;; Author:           Len Trigg, Łukasz Stelmach, zk_phi, Daniel Mendler
-;; Maintainer:       Len Trigg <lenbok@gmail.com>, Daniel Mendler <mail@daniel-mendler.de>
-;; Created:          2010
-;; Keywords:         languages
-;; Homepage:         https://github.com/openscad/emacs-scad-mode
-;; Package-Requires: ((emacs "27.1") (compat "29.1.4.0"))
-;; Version:          93.2
+;; Author: Len Trigg, Łukasz Stelmach, zk_phi, Daniel Mendler
+;; Maintainer: Len Trigg <lenbok@gmail.com>, Daniel Mendler <mail@daniel-mendler.de>
+;; Created: 2010
+;; Keywords: languages
+;; Homepage: https://github.com/openscad/emacs-scad-mode
+;; Package-Requires: ((emacs "27.1") (compat "29.1.4.4"))
+;; Version: 93.3
 
 ;; This file is not part of GNU Emacs.
 
