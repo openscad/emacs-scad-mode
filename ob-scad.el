@@ -22,7 +22,11 @@
 ;;; Code:
 
 (require 'ob)
-(require 'scad-mode)
+
+(defvar scad-command)
+(defvar scad-preview-colorscheme)
+(defvar scad-preview-projection)
+(defvar scad-preview-view)
 
 (defvar org-babel-default-header-args:scad
   '((:results . "file")
