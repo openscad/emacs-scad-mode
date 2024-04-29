@@ -353,7 +353,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
                             (mapconcat #'number-to-string scad-preview-camera ","))
                     (format "--colorscheme=%s" scad-preview-colorscheme)
                     infile)
-              scad-extra-args)))))
+              scad-extra-args))))))
 
 (defun scad--preview-kill ()
   "Kill current rendering."
