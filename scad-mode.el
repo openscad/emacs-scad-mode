@@ -4,7 +4,7 @@
 ;; Maintainer: Len Trigg <lenbok@gmail.com>, Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2010
 ;; Keywords: languages
-;; Homepage: https://github.com/openscad/emacs-scad-mode
+;; URL: https://github.com/openscad/emacs-scad-mode
 ;; Package-Requires: ((emacs "27.1") (compat "30"))
 ;; Version: 94.0
 
@@ -42,7 +42,7 @@
 
 (defgroup scad nil
   "A major mode for editing OpenSCAD code."
-  :link '(url-link :tag "Homepage" "https://github.com/openscad/emacs-scad-mode")
+  :link '(url-link :tag "Website" "https://github.com/openscad/emacs-scad-mode")
   :link '(emacs-library-link :tag "Library Source" "scad-mode.el")
   :group 'languages
   :prefix "scad-")
