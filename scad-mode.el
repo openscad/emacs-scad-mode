@@ -311,6 +311,14 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
         (save-restriction
           (widen)
           (write-region (point-min) (point-max) infile nil 'nomsg)))
+      ;; A means of setting an environment variable for the purposes of
+      ;; `make-process' can't be found or isn't documented.  Setting the
+      ;; environment variable within Emacs causes the process to inherit the
+      ;; environment variable, which is the only known means of passing the
+      ;; variable.
+      ;; Setting the OPENSCADPATH to the current directory allows openscad to
+      ;; pick up other local files with `include <file.scad>'.
+      (setenv "OPENSCADPATH" default-directory)
       (setq scad--preview-proc
             (make-process
              :noquery t
@@ -450,6 +458,14 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
     (save-restriction
       (widen)
       (write-region (point-min) (point-max) infile nil 'nomsg))
+    ;; A means of setting an environment variable for the purposes of
+    ;; `make-process' can't be found or isn't documented.  Setting the
+    ;; environment variable within Emacs causes the process to inherit the
+    ;; environment variable, which is the only known means of passing the
+    ;; variable.
+    ;; Setting the OPENSCADPATH to the current directory allows openscad to pick
+    ;; up other local files with `include <file.scad>'.
+    (setenv "OPENSCADPATH" default-directory)
     (setq
      scad--flymake-proc
      (make-process
