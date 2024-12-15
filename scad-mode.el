@@ -311,49 +311,58 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
         (save-restriction
           (widen)
           (write-region (point-min) (point-max) infile nil 'nomsg)))
-      (setq scad--preview-proc
-            (make-process
-             :noquery t
-             :connection-type 'pipe
-             :name "scad-preview"
-             :buffer "*scad preview output*"
-             :sentinel
-             (lambda (proc _event)
-               (when (memq (process-status proc) '(exit signal))
-                 (unwind-protect
-                     (when (buffer-live-p buffer)
-                       (with-current-buffer buffer
-                         (setq scad--preview-proc nil)
-                         (if (not (ignore-errors
-                                    (and (file-exists-p outfile)
-                                         (> (file-attribute-size (file-attributes outfile)) 0))))
-                             (scad--preview-status "Error")
-                           (with-silent-modifications
-                             (fundamental-mode)
-                             (erase-buffer)
-                             (insert-file-contents outfile)
-                             (let ((inhibit-message t)
-                                   (message-log-max nil))
-                               (scad-preview-mode)))
-                           (scad--preview-status ""))))
-                   (delete-file outfile)
-                   (delete-file infile))))
-             :command
-             (append
-              (list scad-command
-                    "-o" outfile
-                    "--preview"
-                    (format "--projection=%s" scad-preview-projection)
-                    (format "--imgsize=%d,%d"
-                            (car scad-preview-size)
-                            (cdr scad-preview-size))
-                    (format "--view=%s"
-                            (mapconcat #'identity scad-preview-view ","))
-                    (format "--camera=%s"
-                            (mapconcat #'number-to-string scad-preview-camera ","))
-                    (format "--colorscheme=%s" scad-preview-colorscheme)
-                    infile)
-              scad-extra-args))))))
+      (let* ((command (append
+                       (list scad-command
+                             "-o" outfile
+                             "--preview"
+                             (format "--projection=%s" scad-preview-projection)
+                             (format "--imgsize=%d,%d"
+                                     (car scad-preview-size)
+                                     (cdr scad-preview-size))
+                             (format "--view=%s"
+                                     (mapconcat #'identity scad-preview-view ","))
+                             (format "--camera=%s"
+                                     (mapconcat #'number-to-string scad-preview-camera ","))
+                             (format "--colorscheme=%s" scad-preview-colorscheme)
+                             infile)
+                       scad-extra-args))
+             (command-string (string-join command " ")))
+        ;; Add environment variable if necessary, necessary to make `use` and `include` work
+        (when (buffer-file-name scad--preview-buffer)
+          (let ((directory (file-name-directory (buffer-file-name scad--preview-buffer))))
+            (setq command-string (format "OPENSCADPATH=%s %s" directory command-string))))
+
+        ;; Execute the command in a process
+        (let ((final-command (list "sh" "-c" command-string)))
+          (setq scad--preview-proc
+                (make-process
+                 :noquery t
+                 :connection-type 'pipe
+                 :name "scad-preview"
+                 :buffer "*scad preview output*"
+                 :command final-command
+                 :sentinel
+                 (lambda (proc _event)
+                   (when (memq (process-status proc) '(exit signal))
+                     (unwind-protect
+                         (when (buffer-live-p buffer)
+                           (with-current-buffer buffer
+                             (setq scad--preview-proc nil)
+                             (if (not (ignore-errors
+                                        (and (file-exists-p outfile)
+                                             (> (file-attribute-size (file-attributes outfile)) 0))))
+                                 (scad--preview-status "Error")
+                               (with-silent-modifications
+                                 (fundamental-mode)
+                                 (erase-buffer)
+                                 (insert-file-contents outfile)
+                                 (let ((inhibit-message t)
+                                       (message-log-max nil))
+                                   (scad-preview-mode)))
+                               (scad--preview-status ""))))
+                       (delete-file outfile)
+                       (delete-file infile))))
+                 )))))))
 
 (defun scad--preview-kill ()
   "Kill current rendering."
@@ -450,32 +459,41 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
     (save-restriction
       (widen)
       (write-region (point-min) (point-max) infile nil 'nomsg))
-    (setq
-     scad--flymake-proc
-     (make-process
-      :name "scad-flymake"
-      :noquery t
-      :connection-type 'pipe
-      :buffer (generate-new-buffer " *scad-flymake*")
-      :command (append (list scad-command "-o" outfile infile) scad-extra-args)
-      :sentinel
-      (lambda (proc _event)
-        (when (memq (process-status proc) '(exit signal))
-          (unwind-protect
-              (when (and (buffer-live-p buffer)
-                         (eq proc (buffer-local-value 'scad--flymake-proc buffer)))
-                (with-current-buffer (process-buffer proc)
-                  (goto-char (point-min))
-                  (let (diags)
-                    (while (search-forward-regexp "^\\(ERROR\\|WARNING\\): \\(.*?\\),? in file [^,]+, line \\([0-9]+\\)" nil t)
-                      (let ((msg (match-string 2))
-                            (type (if (equal (match-string 1) "ERROR") :error :warning))
-                            (region (flymake-diag-region buffer (string-to-number (match-string 3)))))
-                        (push (flymake-make-diagnostic buffer (car region) (cdr region) type msg) diags)))
-                    (funcall report-fn (nreverse diags)))))
-            (delete-file outfile)
-            (delete-file infile)
-            (kill-buffer (process-buffer proc)))))))))
+    (let* ((command (append (list scad-command "-o" outfile infile) scad-extra-args))
+           (command-string (string-join command " ")))
+      ;; Add environment variable if necessary, necessary to make `use` and `include` work
+      (when (buffer-file-name buffer)
+        (let ((directory (file-name-directory (buffer-file-name buffer))))
+          (setq command-string (format "OPENSCADPATH=%s %s" directory command-string))))
+
+      ;; Execute the command in a process
+      (let ((final-command (list "sh" "-c" command-string)))
+        (setq scad--flymake-proc
+              (make-process
+               :name "scad-flymake"
+               :noquery t
+               :connection-type 'pipe
+               :buffer (generate-new-buffer " *scad-flymake*")
+               :command final-command
+               :sentinel
+               (lambda (proc _event)
+                 (when (memq (process-status proc) '(exit signal))
+                   (unwind-protect
+                       (when (and (buffer-live-p buffer)
+                                  (eq proc (buffer-local-value 'scad--flymake-proc buffer)))
+                         (with-current-buffer (process-buffer proc)
+                           (goto-char (point-min))
+                           (let (diags)
+                             (while (search-forward-regexp "^\\(ERROR\\|WARNING\\): \\(.*?\\),? in file [^,]+, line \\([0-9]+\\)" nil t)
+                               (let ((msg (match-string 2))
+                                     (type (if (equal (match-string 1) "ERROR") :error :warning))
+                                     (region (flymake-diag-region buffer (string-to-number (match-string 3)))))
+                                 (push (flymake-make-diagnostic buffer (car region) (cdr region) type msg) diags)))
+                             (funcall report-fn (nreverse diags)))))
+                     (delete-file outfile)
+                     (delete-file infile)
+                     (kill-buffer (process-buffer proc)))))
+               ))))))
 
 ;; Print warning if the scad-preview package is installed
 (when (require 'scad-preview nil 'noerror)
