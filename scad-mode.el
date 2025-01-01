@@ -306,7 +306,8 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
     (scad--preview-kill)
     (scad--preview-status "Render")
     (let* ((infile (make-temp-file "scad-preview-" nil ".scad"))
-           (outfile (concat (file-name-sans-extension infile) ".png"))
+           (basefile (file-name-sans-extension infile))
+           (outfile (concat basefile ".tmp.png"))
            (buffer (current-buffer)))
       (with-current-buffer scad--preview-buffer
         (save-restriction
@@ -327,21 +328,24 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
                :buffer "*scad preview output*"
                :sentinel
                (lambda (proc _event)
-                 (delete-file infile)
-                 (when (and (buffer-live-p buffer)
-                            (memq (process-status proc) '(exit signal)))
-                   (with-current-buffer buffer
-                     (setq scad--preview-proc nil)
-                     (if (not (ignore-errors
-                                (and (file-exists-p outfile)
-                                     (> (file-attribute-size (file-attributes outfile)) 0))))
-                         (scad--preview-status "Error")
-                       (with-silent-modifications
-                         (scad--preview-delete)
-                         (setq scad--preview-image outfile)
-                         (erase-buffer)
-                         (insert (propertize "#" 'display `(image :type png :file ,outfile))))
-                       (scad--preview-status "Done")))))
+                 (unwind-protect
+                     (when (and (buffer-live-p buffer)
+                                (memq (process-status proc) '(exit signal)))
+                       (with-current-buffer buffer
+                         (setq scad--preview-proc nil)
+                         (if (not (ignore-errors
+                                    (and (file-exists-p outfile)
+                                         (> (file-attribute-size (file-attributes outfile)) 0))))
+                             (scad--preview-status "Error")
+                           (with-silent-modifications
+                             (scad--preview-delete)
+                             (setq scad--preview-image (concat basefile ".png"))
+                             (rename-file outfile scad--preview-image)
+                             (erase-buffer)
+                             (insert (propertize "#" 'display `(image :type png :file ,scad--preview-image))))
+                           (scad--preview-status "Done"))))
+                   (delete-file infile)
+                   (delete-file outfile)))
                :command
                (append
                 (list scad-command
@@ -459,7 +463,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
     (delete-process scad--flymake-proc))
   (let* ((buffer (current-buffer))
          (infile (make-temp-file "scad-flymake-" nil ".scad"))
-         (outfile (concat infile ".ast")))
+         (outfile (concat (file-name-sans-extension infile) ".ast")))
     (save-restriction
       (widen)
       (write-region (point-min) (point-max) infile nil 'nomsg))
