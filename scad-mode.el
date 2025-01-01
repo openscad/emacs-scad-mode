@@ -311,57 +311,56 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
         (save-restriction
           (widen)
           (write-region (point-min) (point-max) infile nil 'nomsg)))
-      ;; A means of setting an environment variable for the purposes of
-      ;; `make-process' can't be found or isn't documented.  Setting the
-      ;; environment variable within Emacs causes the process to inherit the
-      ;; environment variable, which is the only known means of passing the
-      ;; variable.
-      ;; Setting the OPENSCADPATH to the current directory allows openscad to
-      ;; pick up other local files with `include <file.scad>'.
-      (setenv "OPENSCADPATH" default-directory)
-      (setq scad--preview-proc
-            (make-process
-             :noquery t
-             :connection-type 'pipe
-             :name "scad-preview"
-             :buffer "*scad preview output*"
-             :sentinel
-             (lambda (proc _event)
-               (when (memq (process-status proc) '(exit signal))
-                 (unwind-protect
-                     (when (buffer-live-p buffer)
-                       (with-current-buffer buffer
-                         (setq scad--preview-proc nil)
-                         (if (not (ignore-errors
-                                    (and (file-exists-p outfile)
-                                         (> (file-attribute-size (file-attributes outfile)) 0))))
-                             (scad--preview-status "Error")
-                           (with-silent-modifications
-                             (fundamental-mode)
-                             (erase-buffer)
-                             (insert-file-contents outfile)
-                             (let ((inhibit-message t)
-                                   (message-log-max nil))
-                               (scad-preview-mode)))
-                           (scad--preview-status ""))))
-                   (delete-file outfile)
-                   (delete-file infile))))
-             :command
-             (append
-              (list scad-command
-                    "-o" outfile
-                    "--preview"
-                    (format "--projection=%s" scad-preview-projection)
-                    (format "--imgsize=%d,%d"
-                            (car scad-preview-size)
-                            (cdr scad-preview-size))
-                    (format "--view=%s"
-                            (mapconcat #'identity scad-preview-view ","))
-                    (format "--camera=%s"
-                            (mapconcat #'number-to-string scad-preview-camera ","))
-                    (format "--colorscheme=%s" scad-preview-colorscheme)
-                    infile)
-              scad-extra-args))))))
+      (with-environment-variables
+          ;; Setting the OPENSCADPATH to the current directory allows openscad to pick
+          ;; up other local files with `include <file.scad>'.
+          (("OPENSCADPATH"
+            (if-let ((path (getenv "OPENSCADPATH")))
+                (concat default-directory path-separator path)
+              default-directory)))
+        (setq scad--preview-proc
+              (make-process
+               :noquery t
+               :connection-type 'pipe
+               :name "scad-preview"
+               :buffer "*scad preview output*"
+               :sentinel
+               (lambda (proc _event)
+                 (when (memq (process-status proc) '(exit signal))
+                   (unwind-protect
+                       (when (buffer-live-p buffer)
+                         (with-current-buffer buffer
+                           (setq scad--preview-proc nil)
+                           (if (not (ignore-errors
+                                      (and (file-exists-p outfile)
+                                           (> (file-attribute-size (file-attributes outfile)) 0))))
+                               (scad--preview-status "Error")
+                             (with-silent-modifications
+                               (fundamental-mode)
+                               (erase-buffer)
+                               (insert-file-contents outfile)
+                               (let ((inhibit-message t)
+                                     (message-log-max nil))
+                                 (scad-preview-mode)))
+                             (scad--preview-status ""))))
+                     (delete-file outfile)
+                     (delete-file infile))))
+               :command
+               (append
+                (list scad-command
+                      "-o" outfile
+                      "--preview"
+                      (format "--projection=%s" scad-preview-projection)
+                      (format "--imgsize=%d,%d"
+                              (car scad-preview-size)
+                              (cdr scad-preview-size))
+                      (format "--view=%s"
+                              (mapconcat #'identity scad-preview-view ","))
+                      (format "--camera=%s"
+                              (mapconcat #'number-to-string scad-preview-camera ","))
+                      (format "--colorscheme=%s" scad-preview-colorscheme)
+                      infile)
+                scad-extra-args)))))))
 
 (defun scad--preview-kill ()
   "Kill current rendering."
@@ -373,22 +372,22 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
     (setq scad--preview-timer nil)))
 
 (define-derived-mode scad-preview-mode image-mode "SCAD/Preview"
- "Major mode for SCAD preview buffers."
- (setq-local buffer-read-only t
-             line-spacing nil
-             cursor-type nil
-             cursor-in-non-selected-windows nil
-             left-fringe-width 1
-             right-fringe-width 1
-             left-margin-width 0
-             right-margin-width 0
-             truncate-lines nil
-             show-trailing-whitespace nil
-             display-line-numbers nil
-             fringe-indicator-alist '((truncation . nil))
-             revert-buffer-function #'scad--preview-reset
-             mode-line-position '(" " scad--preview-mode-camera)
-             mode-line-process '(" " scad--preview-mode-status)))
+  "Major mode for SCAD preview buffers."
+  (setq-local buffer-read-only t
+              line-spacing nil
+              cursor-type nil
+              cursor-in-non-selected-windows nil
+              left-fringe-width 1
+              right-fringe-width 1
+              left-margin-width 0
+              right-margin-width 0
+              truncate-lines nil
+              show-trailing-whitespace nil
+              display-line-numbers nil
+              fringe-indicator-alist '((truncation . nil))
+              revert-buffer-function #'scad--preview-reset
+              mode-line-position '(" " scad--preview-mode-camera)
+              mode-line-process '(" " scad--preview-mode-status)))
 
 (defun scad--preview-reset (&rest _)
   "Reset camera parameters and refresh."
@@ -458,40 +457,39 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
     (save-restriction
       (widen)
       (write-region (point-min) (point-max) infile nil 'nomsg))
-    ;; A means of setting an environment variable for the purposes of
-    ;; `make-process' can't be found or isn't documented.  Setting the
-    ;; environment variable within Emacs causes the process to inherit the
-    ;; environment variable, which is the only known means of passing the
-    ;; variable.
-    ;; Setting the OPENSCADPATH to the current directory allows openscad to pick
-    ;; up other local files with `include <file.scad>'.
-    (setenv "OPENSCADPATH" default-directory)
-    (setq
-     scad--flymake-proc
-     (make-process
-      :name "scad-flymake"
-      :noquery t
-      :connection-type 'pipe
-      :buffer (generate-new-buffer " *scad-flymake*")
-      :command (append (list scad-command "-o" outfile infile) scad-extra-args)
-      :sentinel
-      (lambda (proc _event)
-        (when (memq (process-status proc) '(exit signal))
-          (unwind-protect
-              (when (and (buffer-live-p buffer)
-                         (eq proc (buffer-local-value 'scad--flymake-proc buffer)))
-                (with-current-buffer (process-buffer proc)
-                  (goto-char (point-min))
-                  (let (diags)
-                    (while (search-forward-regexp "^\\(ERROR\\|WARNING\\): \\(.*?\\),? in file [^,]+, line \\([0-9]+\\)" nil t)
-                      (let ((msg (match-string 2))
-                            (type (if (equal (match-string 1) "ERROR") :error :warning))
-                            (region (flymake-diag-region buffer (string-to-number (match-string 3)))))
-                        (push (flymake-make-diagnostic buffer (car region) (cdr region) type msg) diags)))
-                    (funcall report-fn (nreverse diags)))))
-            (delete-file outfile)
-            (delete-file infile)
-            (kill-buffer (process-buffer proc)))))))))
+    (with-environment-variables
+        ;; Setting the OPENSCADPATH to the current directory allows openscad to pick
+        ;; up other local files with `include <file.scad>'.
+        (("OPENSCADPATH"
+          (if-let ((path (getenv "OPENSCADPATH")))
+              (concat default-directory path-separator path)
+            default-directory)))
+      (setq
+       scad--flymake-proc
+       (make-process
+        :name "scad-flymake"
+        :noquery t
+        :connection-type 'pipe
+        :buffer (generate-new-buffer " *scad-flymake*")
+        :command (append (list scad-command "-o" outfile infile) scad-extra-args)
+        :sentinel
+        (lambda (proc _event)
+          (when (memq (process-status proc) '(exit signal))
+            (unwind-protect
+                (when (and (buffer-live-p buffer)
+                           (eq proc (buffer-local-value 'scad--flymake-proc buffer)))
+                  (with-current-buffer (process-buffer proc)
+                    (goto-char (point-min))
+                    (let (diags)
+                      (while (search-forward-regexp "^\\(ERROR\\|WARNING\\): \\(.*?\\),? in file [^,]+, line \\([0-9]+\\)" nil t)
+                        (let ((msg (match-string 2))
+                              (type (if (equal (match-string 1) "ERROR") :error :warning))
+                              (region (flymake-diag-region buffer (string-to-number (match-string 3)))))
+                          (push (flymake-make-diagnostic buffer (car region) (cdr region) type msg) diags)))
+                      (funcall report-fn (nreverse diags)))))
+              (delete-file outfile)
+              (delete-file infile)
+              (kill-buffer (process-buffer proc))))))))))
 
 ;; Print warning if the scad-preview package is installed
 (when (require 'scad-preview nil 'noerror)
