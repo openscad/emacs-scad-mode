@@ -227,6 +227,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 
 (defvar-local scad--preview-buffer      nil)
 (defvar-local scad--preview-proc        nil)
+(defvar-local scad--preview-image       nil)
 (defvar-local scad--preview-mode-status nil)
 (defvar-local scad--preview-mode-camera nil)
 (defvar-local scad--preview-timer       nil)
@@ -265,20 +266,20 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 (defun scad-preview ()
   "Preview SCAD models in real-time within Emacs."
   (interactive)
-  (setq scad--preview-buffer (if (buffer-live-p scad--preview-buffer)
-                                 scad--preview-buffer
-                               (get-buffer-create (format "*scad preview: %s*" (buffer-name)))))
+  (unless (buffer-live-p scad--preview-buffer)
+    (setq scad--preview-buffer
+          (with-current-buffer (get-buffer-create (format "*scad preview: %s*" (buffer-name)))
+            (scad-preview-mode)
+            (current-buffer))))
   (when scad-preview-refresh
     (add-hook 'after-change-functions #'scad--preview-change nil 'local))
-  (display-buffer scad--preview-buffer)
   (let ((orig-buffer (current-buffer)))
     (with-current-buffer scad--preview-buffer
       (setq scad--preview-buffer orig-buffer)
-      (let ((inhibit-message t)
-            (message-log-max nil))
-        (scad-preview-mode))
       (add-hook 'kill-buffer-hook #'scad--preview-kill nil t)
-      (scad--preview-reset))))
+      (add-hook 'kill-buffer-hook #'scad--preview-delete nil t)
+      (scad--preview-reset)))
+  (display-buffer scad--preview-buffer '(nil (inhibit-same-window . t))))
 
 (defun scad--preview-change (&rest _)
   "Buffer changed, trigger rerendering."
@@ -305,7 +306,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
     (scad--preview-kill)
     (scad--preview-status "Render")
     (let* ((infile (make-temp-file "scad-preview-" nil ".scad"))
-           (outfile (concat infile ".png"))
+           (outfile (concat (file-name-sans-extension infile) ".png"))
            (buffer (current-buffer)))
       (with-current-buffer scad--preview-buffer
         (save-restriction
@@ -326,25 +327,21 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
                :buffer "*scad preview output*"
                :sentinel
                (lambda (proc _event)
-                 (when (memq (process-status proc) '(exit signal))
-                   (unwind-protect
-                       (when (buffer-live-p buffer)
-                         (with-current-buffer buffer
-                           (setq scad--preview-proc nil)
-                           (if (not (ignore-errors
-                                      (and (file-exists-p outfile)
-                                           (> (file-attribute-size (file-attributes outfile)) 0))))
-                               (scad--preview-status "Error")
-                             (with-silent-modifications
-                               (fundamental-mode)
-                               (erase-buffer)
-                               (insert-file-contents outfile)
-                               (let ((inhibit-message t)
-                                     (message-log-max nil))
-                                 (scad-preview-mode)))
-                             (scad--preview-status ""))))
-                     (delete-file outfile)
-                     (delete-file infile))))
+                 (delete-file infile)
+                 (when (and (buffer-live-p buffer)
+                            (memq (process-status proc) '(exit signal)))
+                   (with-current-buffer buffer
+                     (setq scad--preview-proc nil)
+                     (if (not (ignore-errors
+                                (and (file-exists-p outfile)
+                                     (> (file-attribute-size (file-attributes outfile)) 0))))
+                         (scad--preview-status "Error")
+                       (with-silent-modifications
+                         (scad--preview-delete)
+                         (setq scad--preview-image outfile)
+                         (erase-buffer)
+                         (insert (propertize "#" 'display `(image :type png :file ,outfile))))
+                       (scad--preview-status "Done")))))
                :command
                (append
                 (list scad-command
@@ -371,7 +368,13 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
     (cancel-timer scad--preview-timer)
     (setq scad--preview-timer nil)))
 
-(define-derived-mode scad-preview-mode image-mode "SCAD/Preview"
+(defun scad--preview-delete ()
+  "Delete current image."
+  (when scad--preview-image
+    (delete-file scad--preview-image)
+    (setq scad--preview-image nil)))
+
+(define-derived-mode scad-preview-mode special-mode "SCAD/Preview"
   "Major mode for SCAD preview buffers."
   (setq-local buffer-read-only t
               line-spacing nil
@@ -387,7 +390,10 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
               fringe-indicator-alist '((truncation . nil))
               revert-buffer-function #'scad--preview-reset
               mode-line-position '(" " scad--preview-mode-camera)
-              mode-line-process '(" " scad--preview-mode-status)))
+              mode-line-process '(" " scad--preview-mode-status)
+              mode-line-modified nil
+              mode-line-mule-info nil
+              mode-line-remote nil))
 
 (defun scad--preview-reset (&rest _)
   "Reset camera parameters and refresh."
