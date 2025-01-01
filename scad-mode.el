@@ -373,6 +373,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 
 (define-derived-mode scad-preview-mode special-mode "SCAD/Preview"
   "Major mode for SCAD preview buffers."
+  :interactive nil :abbrev-table nil :syntax-table nil
   (setq-local buffer-read-only t
               line-spacing nil
               cursor-type nil
