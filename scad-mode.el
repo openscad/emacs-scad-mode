@@ -206,7 +206,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 
 (defun scad-open ()
   "Open current buffer with `scad-command'."
-  (interactive)
+  (interactive nil scad-mode)
   (save-buffer)
   (call-process scad-command nil 0 nil (buffer-file-name)))
 
@@ -217,7 +217,8 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
           "Export to: "
           nil nil nil
           (concat (file-name-base (buffer-file-name))
-                  scad-export-extension))))
+                  scad-export-extension)))
+   scad-mode)
   (save-buffer)
   (compile (string-join (append (list scad-command)
                                 (list "-o"
@@ -257,7 +258,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 
 (defun scad-preview ()
   "Preview SCAD models in real-time within Emacs."
-  (interactive)
+  (interactive nil scad-mode)
   (unless (buffer-live-p scad--preview-buffer)
     (setq scad--preview-buffer
           (with-current-buffer (get-buffer-create (format "*scad preview: %s*" (buffer-name)))
@@ -400,7 +401,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 
 (defun scad-preview-size+ (&optional factor)
   "Grow image size by FACTOR."
-  (interactive)
+  (interactive nil scad-preview-mode)
   (setf factor (or factor 1.1)
         (car scad-preview-size) (round (* (car scad-preview-size) factor))
         (cdr scad-preview-size) (round (* (cdr scad-preview-size) factor)))
@@ -408,12 +409,12 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 
 (defun scad-preview-size- (&optional factor)
   "Shrink image size by FACTOR."
-  (interactive)
+  (interactive nil scad-preview-mode)
   (scad-preview-size+ (/ (or factor 1.1))))
 
 (defun scad-preview-projection ()
   "Toggle projection."
-  (interactive)
+  (interactive nil scad-preview-mode)
   (setq-local scad-preview-projection
               (if (eq scad-preview-projection 'ortho)
                   'perspective
@@ -424,7 +425,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
   "Define camera move function NAME which increments IDX by OFF."
   `(defun ,(intern (format "scad-preview-%s" name)) (&optional offset)
      "Move camera by OFFSET."
-     (interactive "P")
+     (interactive "P" scad-preview-mode)
      (cl-incf (nth ,idx scad-preview-camera)
               (* (cl-signum ,off)
                  (if offset (prefix-numeric-value offset) ,(abs off))))
