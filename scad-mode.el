@@ -231,14 +231,6 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 (defvar-local scad--preview-mode-status nil)
 (defvar-local scad--preview-mode-camera nil)
 (defvar-local scad--preview-timer       nil)
-(put 'scad-preview-camera       'permanent-local t)
-(put 'scad-preview-size         'permanent-local t)
-(put 'scad-preview-projection   'permanent-local t)
-(put 'scad--preview-buffer      'permanent-local t)
-(put 'scad--preview-proc        'permanent-local t)
-(put 'scad--preview-timer       'permanent-local t)
-(put 'scad--preview-mode-status 'permanent-local t)
-(put 'scad--preview-mode-camera 'permanent-local t)
 
 (defvar-keymap scad-preview-mode-map
   :doc "Keymap for SCAD preview buffers."
