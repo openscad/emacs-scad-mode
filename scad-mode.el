@@ -293,6 +293,15 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
                      (setq scad--preview-timer nil)
                      (scad--preview-render))))))))))
 
+(defun scad--preview-colorscheme ()
+  "Color scheme depending on Emacs theme."
+  (cond
+   ((stringp scad-preview-colorscheme)
+    scad-preview-colorscheme)
+   ((color-dark-p (color-name-to-rgb (face-background 'default)))
+    (cdr scad-preview-colorscheme))
+   (t (car scad-preview-colorscheme))))
+
 ;; Based on https://github.com/zk-phi/scad-preview
 (defun scad--preview-render ()
   "Render image from current buffer."
@@ -354,13 +363,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
                               (mapconcat #'identity scad-preview-view ","))
                       (format "--camera=%s"
                               (mapconcat #'number-to-string scad-preview-camera ","))
-                      (format "--colorscheme=%s"
-                              (cond
-                               ((stringp scad-preview-colorscheme)
-                                scad-preview-colorscheme)
-                               ((color-dark-p (color-name-to-rgb (face-background 'default)))
-                                (cdr scad-preview-colorscheme))
-                               (t (car scad-preview-colorscheme))))
+                      (format "--colorscheme=%s" (scad--preview-colorscheme))
                       infile)
                 scad-extra-args)))))))
 

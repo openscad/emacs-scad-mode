@@ -24,7 +24,7 @@
 (require 'ob)
 
 (defvar scad-command)
-(defvar scad-preview-colorscheme)
+(declare-function scad--preview-colorscheme "ext:scad-mode")
 (defvar scad-preview-projection)
 (defvar scad-preview-view)
 
@@ -43,6 +43,7 @@
 
 (defun org-babel-execute:scad (body params)
   "Evaluate BODY with `scad-command' given PARAMS."
+  (require 'scad-mode)
   (let* ((outfile (or (alist-get :file params)
                       (error "Scad code block requires :file header argument")))
          (infile (org-babel-temp-file "scad-")))
@@ -55,7 +56,7 @@
                        (format "--projection=%s"
                                (alist-get :projection params scad-preview-projection))
                        (format "--colorscheme=%s"
-                               (alist-get :colorscheme params scad-preview-colorscheme))
+                               (alist-get :colorscheme params (scad--preview-colorscheme)))
                        (format "--view=%s" (or (alist-get :view params)
                                                (mapconcat #'identity scad-preview-view ",")))
                        (when-let (camera (alist-get :camera params))
