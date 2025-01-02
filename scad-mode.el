@@ -128,9 +128,11 @@ For example '--enable=manifold'."
   "Size of preview image."
   :type '(cons natnum natnum))
 
-(defcustom scad-preview-colorscheme "Tomorrow"
-  "Colorscheme for rendering preview."
-  :type 'string)
+(defcustom scad-preview-colorscheme '("Tomorrow" . "Tomorrow Night")
+  "Color scheme for rendering preview.
+Can be pair of light and dark scheme, used depending on the current
+Emacs theme."
+  :type '(choice string (cons string string)))
 
 (defcustom scad-preview-view '("axes" "scales")
   "List of views to be rendered.
@@ -352,7 +354,13 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
                               (mapconcat #'identity scad-preview-view ","))
                       (format "--camera=%s"
                               (mapconcat #'number-to-string scad-preview-camera ","))
-                      (format "--colorscheme=%s" scad-preview-colorscheme)
+                      (format "--colorscheme=%s"
+                              (cond
+                               ((stringp scad-preview-colorscheme)
+                                scad-preview-colorscheme)
+                               ((color-dark-p (color-name-to-rgb (face-background 'default)))
+                                (cdr scad-preview-colorscheme))
+                               (t (car scad-preview-colorscheme))))
                       infile)
                 scad-extra-args)))))))
 
