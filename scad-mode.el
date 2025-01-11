@@ -124,10 +124,6 @@ For example '--enable=manifold'."
   "Delay in seconds until updating preview."
   :type '(choice (const nil) number))
 
-(defcustom scad-preview-size '(1000 . 1000)
-  "Size of preview image."
-  :type '(cons natnum natnum))
-
 (defcustom scad-preview-colorscheme '("Tomorrow" . "Tomorrow Night")
   "Color scheme for rendering preview.
 Can be pair of light and dark scheme, used depending on the current
@@ -238,8 +234,6 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 (defvar-keymap scad-preview-mode-map
   :doc "Keymap for SCAD preview buffers."
   "p" #'scad-preview-projection
-  "M--" #'scad-preview-size-
-  "M-+" #'scad-preview-size+
   "-" #'scad-preview-distance-
   "+" #'scad-preview-distance+
   "<right>" #'scad-preview-rotate-z-
@@ -357,8 +351,8 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
                       "--preview"
                       (format "--projection=%s" scad-preview-projection)
                       (format "--imgsize=%d,%d"
-                              (car scad-preview-size)
-                              (cdr scad-preview-size))
+                              (window-pixel-width)
+                              (window-pixel-height))
                       (format "--view=%s"
                               (mapconcat #'identity scad-preview-view ","))
                       (format "--camera=%s"
@@ -407,22 +401,8 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 (defun scad--preview-reset (&rest _)
   "Reset camera parameters and refresh."
   (setq-local scad-preview-camera (copy-sequence (default-value 'scad-preview-camera))
-              scad-preview-size (copy-tree (default-value 'scad-preview-size))
               scad-preview-projection (default-value 'scad-preview-projection))
   (scad--preview-render))
-
-(defun scad-preview-size+ (&optional factor)
-  "Grow image size by FACTOR."
-  (interactive nil scad-preview-mode)
-  (setf factor (or factor 1.1)
-        (car scad-preview-size) (round (* (car scad-preview-size) factor))
-        (cdr scad-preview-size) (round (* (cdr scad-preview-size) factor)))
-  (scad--preview-render))
-
-(defun scad-preview-size- (&optional factor)
-  "Shrink image size by FACTOR."
-  (interactive nil scad-preview-mode)
-  (scad-preview-size+ (/ (or factor 1.1))))
 
 (defun scad-preview-projection ()
   "Toggle projection."
