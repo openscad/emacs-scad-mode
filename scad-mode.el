@@ -260,7 +260,6 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
           (with-current-buffer (get-buffer-create (format "*scad preview: %s*" (buffer-name)))
             (scad-preview-mode)
             (current-buffer))))
-  (display-buffer scad--preview-buffer '(nil (inhibit-same-window . t)))
   (when scad-preview-refresh
     (add-hook 'after-change-functions #'scad--preview-change nil 'local))
   (let ((orig-buffer (current-buffer)))
@@ -268,7 +267,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
       (setq scad--preview-buffer orig-buffer)
       (add-hook 'kill-buffer-hook #'scad--preview-kill nil 'local)
       (add-hook 'kill-buffer-hook #'scad--preview-delete nil 'local)
-      (scad--preview-reset))))
+      (scad--preview-render))))
 
 (defun scad--preview-change (&rest _)
   "Buffer changed, trigger rerendering."
@@ -297,7 +296,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
    (t (car scad-preview-colorscheme))))
 
 ;; Based on https://github.com/zk-phi/scad-preview
-(defun scad--preview-render ()
+(defun scad--preview-render (&rest _)
   "Render image from current buffer."
   (if (not (buffer-live-p scad--preview-buffer))
       (scad--preview-status "Dead")
@@ -306,7 +305,10 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
     (let* ((infile (make-temp-file "scad-preview-" nil ".scad"))
            (basefile (file-name-sans-extension infile))
            (outfile (concat basefile ".tmp.png"))
-           (buffer (current-buffer)))
+           (buffer (current-buffer))
+           (win (or (get-buffer-window buffer)
+                    (display-buffer
+                     buffer '(nil (inhibit-same-window . t))))))
       (with-current-buffer scad--preview-buffer
         (save-restriction
           (widen)
@@ -351,8 +353,8 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
                       "--preview"
                       (format "--projection=%s" scad-preview-projection)
                       (format "--imgsize=%d,%d"
-                              (window-pixel-width)
-                              (window-pixel-height))
+                              (window-pixel-width win)
+                              (window-pixel-height win))
                       (format "--view=%s"
                               (mapconcat #'identity scad-preview-view ","))
                       (format "--camera=%s"
@@ -391,18 +393,20 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
               show-trailing-whitespace nil
               display-line-numbers nil
               fringe-indicator-alist '((truncation . nil))
-              revert-buffer-function #'scad--preview-reset
+              revert-buffer-function #'scad--preview-render
               mode-line-position '(" " scad--preview-mode-camera)
               mode-line-process '(" " scad--preview-mode-status)
               mode-line-modified nil
               mode-line-mule-info nil
-              mode-line-remote nil))
-
-(defun scad--preview-reset (&rest _)
-  "Reset camera parameters and refresh."
-  (setq-local scad-preview-camera (copy-sequence (default-value 'scad-preview-camera))
+              mode-line-remote nil
+              scad-preview-camera (copy-sequence (default-value 'scad-preview-camera))
               scad-preview-projection (default-value 'scad-preview-projection))
-  (scad--preview-render))
+  (add-hook 'window-size-change-functions
+            (let ((buf (current-buffer)))
+              (lambda (_)
+                (with-current-buffer buf
+                  (scad--preview-render))))
+            nil 'local))
 
 (defun scad-preview-projection ()
   "Toggle projection."
