@@ -260,15 +260,15 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
           (with-current-buffer (get-buffer-create (format "*scad preview: %s*" (buffer-name)))
             (scad-preview-mode)
             (current-buffer))))
+  (display-buffer scad--preview-buffer '(nil (inhibit-same-window . t)))
   (when scad-preview-refresh
     (add-hook 'after-change-functions #'scad--preview-change nil 'local))
   (let ((orig-buffer (current-buffer)))
     (with-current-buffer scad--preview-buffer
       (setq scad--preview-buffer orig-buffer)
-      (add-hook 'kill-buffer-hook #'scad--preview-kill nil t)
-      (add-hook 'kill-buffer-hook #'scad--preview-delete nil t)
-      (scad--preview-reset)))
-  (display-buffer scad--preview-buffer '(nil (inhibit-same-window . t))))
+      (add-hook 'kill-buffer-hook #'scad--preview-kill nil 'local)
+      (add-hook 'kill-buffer-hook #'scad--preview-delete nil 'local)
+      (scad--preview-reset))))
 
 (defun scad--preview-change (&rest _)
   "Buffer changed, trigger rerendering."
