@@ -265,9 +265,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
   (let ((orig-buffer (current-buffer)))
     (with-current-buffer scad--preview-buffer
       (setq scad--preview-buffer orig-buffer)
-      (add-hook 'kill-buffer-hook #'scad--preview-kill nil 'local)
-      (add-hook 'kill-buffer-hook #'scad--preview-delete nil 'local)
-      (scad--preview-render))))
+      (scad--preview-reset))))
 
 (defun scad--preview-change (&rest _)
   "Buffer changed, trigger rerendering."
@@ -294,6 +292,12 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
    ((color-dark-p (color-name-to-rgb (face-background 'default)))
     (cdr scad-preview-colorscheme))
    (t (car scad-preview-colorscheme))))
+
+(defun scad--preview-reset (&rest _)
+  "Reset camera settings and render."
+  (setq-local scad-preview-camera (copy-sequence (default-value 'scad-preview-camera))
+              scad-preview-projection (default-value 'scad-preview-projection))
+  (scad--preview-render))
 
 ;; Based on https://github.com/zk-phi/scad-preview
 (defun scad--preview-render (&rest _)
@@ -393,14 +397,14 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
               show-trailing-whitespace nil
               display-line-numbers nil
               fringe-indicator-alist '((truncation . nil))
-              revert-buffer-function #'scad--preview-render
+              revert-buffer-function #'scad--preview-reset
               mode-line-position '(" " scad--preview-mode-camera)
               mode-line-process '(" " scad--preview-mode-status)
               mode-line-modified nil
               mode-line-mule-info nil
-              mode-line-remote nil
-              scad-preview-camera (copy-sequence (default-value 'scad-preview-camera))
-              scad-preview-projection (default-value 'scad-preview-projection))
+              mode-line-remote nil)
+  (add-hook 'kill-buffer-hook #'scad--preview-kill nil 'local)
+  (add-hook 'kill-buffer-hook #'scad--preview-delete nil 'local)
   (add-hook 'window-size-change-functions
             (let ((buf (current-buffer)))
               (lambda (_)
