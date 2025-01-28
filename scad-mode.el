@@ -494,9 +494,5 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
               (delete-file infile)
               (kill-buffer (process-buffer proc))))))))))
 
-;; Print warning if the scad-preview package is installed
-(when (require 'scad-preview nil 'noerror)
-  (warn "The scad-preview package should be removed, it has been merged into scad-mode"))
-
 (provide 'scad-mode)
 ;;; scad-mode.el ends here
