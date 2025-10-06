@@ -406,6 +406,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
   (add-hook 'kill-buffer-hook #'scad--preview-kill nil 'local)
   (add-hook 'kill-buffer-hook #'scad--preview-delete nil 'local)
   (add-hook 'window-size-change-functions
+            ;; TODO On Emacs 31 `window-size-change-functions' run in the current buffer
             (let ((buf (current-buffer)))
               (lambda (_)
                 (with-current-buffer buf
