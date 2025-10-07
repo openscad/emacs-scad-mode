@@ -300,7 +300,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
   (scad--preview-render))
 
 ;; Based on https://github.com/zk-phi/scad-preview
-(defun scad--preview-render (&rest _)
+(defun scad--preview-render (&optional _)
   "Render image from current buffer."
   (if (not (buffer-live-p scad--preview-buffer))
       (scad--preview-status "Dead")
@@ -406,11 +406,13 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
   (add-hook 'kill-buffer-hook #'scad--preview-kill nil 'local)
   (add-hook 'kill-buffer-hook #'scad--preview-delete nil 'local)
   (add-hook 'window-size-change-functions
-            ;; TODO On Emacs 31 `window-size-change-functions' run in the current buffer
-            (let ((buf (current-buffer)))
-              (lambda (_)
-                (with-current-buffer buf
-                  (scad--preview-render))))
+            ;; On Emacs 31 `window-size-change-functions' run in current buffer
+            (static-if (>= emacs-major-version 31)
+                #'scad--preview-render
+              (let ((buf (current-buffer)))
+                (lambda (_)
+                  (with-current-buffer buf
+                    (scad--preview-render)))))
             nil 'local))
 
 (defun scad-preview-projection ()
