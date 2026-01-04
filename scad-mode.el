@@ -5,7 +5,7 @@
 ;; Created: 2010
 ;; Keywords: languages
 ;; URL: https://github.com/openscad/emacs-scad-mode
-;; Package-Requires: ((emacs "28.1") (compat "30"))
+;; Package-Requires: ((emacs "29.1") (compat "30"))
 ;; Version: 97.0
 
 ;; This file is not part of GNU Emacs.
@@ -197,7 +197,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
 
 (defun scad-completion-at-point ()
   "Completion at point function."
-  (when-let (bounds (bounds-of-thing-at-point 'word))
+  (when-let* ((bounds (bounds-of-thing-at-point 'word)))
     (list (car bounds) (cdr bounds)
           scad-completions
           :exclusive 'no)))
@@ -321,7 +321,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
           ;; Setting the OPENSCADPATH to the current directory allows openscad to pick
           ;; up other local files with `include <file.scad>'.
           (("OPENSCADPATH"
-            (if-let ((path (getenv "OPENSCADPATH")))
+            (if-let* ((path (getenv "OPENSCADPATH")))
                 (concat default-directory path-separator path)
               default-directory)))
         (setq scad--preview-proc
@@ -467,7 +467,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
         ;; Setting the OPENSCADPATH to the current directory allows openscad to pick
         ;; up other local files with `include <file.scad>'.
         (("OPENSCADPATH"
-          (if-let ((path (getenv "OPENSCADPATH")))
+          (if-let* ((path (getenv "OPENSCADPATH")))
               (concat default-directory path-separator path)
             default-directory)))
       (setq
