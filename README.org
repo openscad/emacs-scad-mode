@@ -6,8 +6,6 @@
 #+texinfo_dir_desc: Edit OpenSCAD files
 
 #+html: <a href="https://www.gnu.org/software/emacs/"><img alt="GNU Emacs" src="https://github.com/minad/corfu/blob/screenshots/emacs.svg?raw=true"/></a>
-#+html: <a href="https://elpa.nongnu.org/nongnu/scad-mode.html"><img alt="NonGNU ELPA" src="https://elpa.nongnu.org/nongnu/scad-mode.svg"/></a>
-#+html: <a href="https://elpa.nongnu.org/nongnu-devel/scad-mode.html"><img alt="NonGNU-devel ELPA" src="https://elpa.nongnu.org/nongnu-devel/scad-mode.svg"/></a>
 #+html: <a href="https://melpa.org/#/scad-mode"><img alt="MELPA" src="https://melpa.org/packages/scad-mode-badge.svg"/></a>
 #+html: <a href="https://stable.melpa.org/#/scad-mode"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/scad-mode-badge.svg"/></a>
 
@@ -32,7 +30,7 @@
 
 * Installation
 
-Install via =M-x package-install RET scad-mode RET= from NonGNU ELPA or MELPA.
+Install via =M-x package-install RET scad-mode RET= from MELPA.
 After the installation =*.scad= files will be opened with =scad-mode=.
 
 * Related packages
