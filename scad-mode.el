@@ -5,7 +5,7 @@
 ;; Created: 2010
 ;; Keywords: languages
 ;; URL: https://github.com/openscad/emacs-scad-mode
-;; Package-Requires: ((emacs "29.1") (compat "30"))
+;; Package-Requires: ((emacs "29.1") (compat "31"))
 ;; Version: 98.0
 
 ;; This program is free software: you can redistribute it and/or modify
@@ -426,7 +426,7 @@ Options are .stl, .off, .amf, .3mf, .csg, .dxf, .svg, .pdf, .png,
   `(defun ,(intern (format "scad-preview-%s" name)) (&optional offset)
      "Move camera by OFFSET."
      (interactive "P" scad-preview-mode)
-     (cl-incf (nth ,idx scad-preview-camera)
+     (incf (nth ,idx scad-preview-camera)
               (* (cl-signum ,off)
                  (if offset (prefix-numeric-value offset) ,(abs off))))
      (scad--preview-render)))
