@@ -6,7 +6,7 @@
 ;; Keywords: languages
 ;; URL: https://github.com/openscad/emacs-scad-mode
 ;; Package-Requires: ((emacs "29.1") (compat "31"))
-;; Version: 98.0
+;; Version: 99.0
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
